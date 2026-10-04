@@ -150,13 +150,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HexWorldManager
   hexPrefab: {fileID: 694778575029199600, guid: 0ea1c21f132176341a3dd80715494a36, type: 3}
-  latitude: 10
-  longitude: 10
+  latitude: 14
+  longitude: 14
   highlightMaterial: {fileID: 2100000, guid: 7d20e94b432a25a7a745e15b5313c3d7, type: 2}
   roadMaterial: {fileID: 2100000, guid: 32d0f1a2e48df945743f4cb49bfac552, type: 2}
   biomes:
   - {fileID: 11400000, guid: a9a8fbb3023ce2b44bdc18c90ebde008, type: 2}
   - {fileID: 11400000, guid: 220bcfca9f7598e43bd015b4dc65f847, type: 2}
+  - {fileID: 11400000, guid: 31cd8af6d013e47f3fae8d65e375c6e9, type: 2}
+  - {fileID: 11400000, guid: d196e8994753573166f65ddf99b9873d, type: 2}
+  - {fileID: 11400000, guid: a640c28d8e6f77920e94ae2084f01b47, type: 2}
+  - {fileID: 11400000, guid: 78ba7e2df40fa985914a3b59d93556af, type: 2}
+  - {fileID: 11400000, guid: d8ef0ba8993309b3c3216d16ba358252, type: 2}
 --- !u!4 &1209295970
 Transform:
   m_ObjectHideFlags: 0

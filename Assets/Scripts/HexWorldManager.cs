@@ -40,6 +40,8 @@ public class HexWorldManager : MonoBehaviour
         // The scene was just loaded; just create a world for now
         Random.InitState(Time.frameCount);
         
+        var biomeMap = GenerateBiomeRegions();
+
         // Load prefab hex for each position
         tiles = new HexTile[latitude, longitude];
         for (int x = 0; x < latitude; x++)
@@ -51,7 +53,7 @@ public class HexWorldManager : MonoBehaviour
                 HexTile curHex = curHexObj.GetComponent<HexTile>();
                 curHex.x = x;
                 curHex.z = z;
-                curHex.biome = RandomBiome();
+                curHex.biome = biomeMap[x, z];
                 MeshRenderer hexRenderer = curHex.GetComponentInChildren<MeshRenderer>();
                 if (curHex.biome.material != null)
                 {
@@ -91,10 +93,12 @@ public class HexWorldManager : MonoBehaviour
     }
 
     // Number of hex steps between two tiles, ignoring roads
-    public static int Distance(HexTile a, HexTile b)
+    public static int Distance(HexTile a, HexTile b) => Distance(a.x, a.z, b.x, b.z);
+
+    public static int Distance(int ax, int az, int bx, int bz)
     {
-        int aq = a.x, ar = a.z - (a.x - (a.x & 1)) / 2;
-        int bq = b.x, br = b.z - (b.x - (b.x & 1)) / 2;
+        int aq = ax, ar = az - (ax - (ax & 1)) / 2;
+        int bq = bx, br = bz - (bx - (bx & 1)) / 2;
         int dq = bq - aq, dr = br - ar;
         return (Mathf.Abs(dq) + Mathf.Abs(dr) + Mathf.Abs(dq + dr)) / 2;
     }
@@ -205,8 +209,41 @@ public class HexWorldManager : MonoBehaviour
         return frame;
     }
 
-    private BiomeData RandomBiome()
+    // Scatter region seeds (every biome gets at least one) and give each tile its nearest seed's biome
+    private BiomeData[,] GenerateBiomeRegions()
     {
-        return biomes[Random.Range(0, biomes.Count)];
+        int seedCount = Mathf.Max(biomes.Count, latitude * longitude / 8);
+        var seeds = new List<(int x, int z, BiomeData biome)>();
+        var order = new List<BiomeData>(biomes);
+        for (int i = 0; i < seedCount; i++)
+        {
+            if (i % biomes.Count == 0)
+            {
+                for (int j = order.Count - 1; j > 0; j--)
+                {
+                    int k = Random.Range(0, j + 1);
+                    (order[j], order[k]) = (order[k], order[j]);
+                }
+            }
+            seeds.Add((Random.Range(0, latitude), Random.Range(0, longitude), order[i % biomes.Count]));
+        }
+
+        var map = new BiomeData[latitude, longitude];
+        for (int x = 0; x < latitude; x++)
+        {
+            for (int z = 0; z < longitude; z++)
+            {
+                int best = int.MaxValue;
+                foreach (var seed in seeds)
+                {
+                    // Random tie-breaking keeps region borders ragged
+                    int d = Distance(x, z, seed.x, seed.z) * 4 + Random.Range(0, 3);
+                    if (d >= best) continue;
+                    best = d;
+                    map[x, z] = seed.biome;
+                }
+            }
+        }
+        return map;
     }
 }

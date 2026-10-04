@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b1b7fbda66a7d28479658e1556cda04b, type: 3}
-  m_Name: Forest
+  m_Name: Mountains
   m_EditorClassIdentifier: Assembly-CSharp::BiomeData
-  biomeName: Forest
-  material: {fileID: 2100000, guid: fd77777d3d6b66b48b15c6ef87c992ff, type: 2}
+  biomeName: Mountains
+  material: {fileID: 2100000, guid: fda4d9645135165fcdf6882d7b08d628, type: 2}
   resourcesPossible:
-  - resource: {fileID: 11400000, guid: 7640492bb15bd1c4abdac36aa20a9ff0, type: 2}
-    probability: 0.75
-  - resource: {fileID: 11400000, guid: 8486317f4bf2278458c66cc41569b3b1, type: 2}
-    probability: 0.05
+  - resource: {fileID: 11400000, guid: fc5f83803f15d7142bd09e672be3da80, type: 2}
+    probability: 0.5
+  - resource: {fileID: 11400000, guid: 871ce3e66b7884446bdccf7400486c80, type: 2}
+    probability: 0.15
