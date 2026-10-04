@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 265098d71eff437e966ba79352d058c3, type: 3}
-  m_Name: Ranch
+  m_Name: RicePaddy
   m_EditorClassIdentifier: Assembly-CSharp::Building
   BuildingType: 1
-  displayName: Ranch
+  displayName: Rice Paddy
   tierBuildTimes: 0000000001000000
   tierBuildResources:
   - resources: []
@@ -23,8 +23,8 @@ MonoBehaviour:
   tierResourceGenerations:
   - resources: []
   - resources:
-    - resource: {fileID: 11400000, guid: 0250876f45f2d2b4ea8db89122cbf35d, type: 2}
+    - resource: {fileID: 11400000, guid: e887aeed84b6df64f839eeea0964bffe, type: 2}
       amount: 8
   tierResourceConversion: []
   tierModels:
-  - {fileID: 6161011283831274941, guid: 4787445b4b87d0e60c2a47d5f5a4c3a7, type: 3}
+  - {fileID: 4369260432601901415, guid: def1409487bc9ed9e09b0d4d0279c3f4, type: 3}

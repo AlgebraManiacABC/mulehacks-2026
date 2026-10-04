@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Spice
   m_EditorClassIdentifier: Assembly-CSharp::ResourceData
   resourceName: Spice
-  isPrimary: 0
+  isPrimary: 1
   roadResourceType: 0
   isArchitectural: 0
   isFood: 0

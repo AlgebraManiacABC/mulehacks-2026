@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-public enum ProjectType { CITY_UPGRADE, FARM, MILL, ROAD, SHIPMENT }
+public enum ProjectType { CITY_UPGRADE, PRODUCER, PROCESSOR, ROAD, SHIPMENT }
 
 public enum GameState { PLAYING, WON, LOST }
 
@@ -11,6 +11,7 @@ public class Project
 {
     public string name;
     public ProjectType type;
+    public Building building;
     public Settlement owner;
     public int turnsLeft;
     public Action onComplete;
@@ -33,8 +34,8 @@ public class TurnManager : MonoBehaviour
     // Upgrade costs and times of the capital, indexed by target tier
     [SerializeField]
     public Building capitolBuilding;
-    public Building farmBuilding;
-    public Building millBuilding;
+    // Harvesting (FARM type) and processing (MILL type) buildings
+    public List<Building> buildings;
     public GameObject settlerPrefab;
     public GameObject caravanPrefab;
     // The HexWorldManager, for ease of communication
@@ -44,14 +45,8 @@ public class TurnManager : MonoBehaviour
     public ResourceCollection settlerResourceCost;
     // How many people leave with a settler group
     public int settlerCount = 2;
-    public ResourceCollection farmCost;
-    public int farmYield = 6;
-    // Multiplied by the target mill tier
-    public ResourceCollection millCostPerTier;
-    public int maxMillTier = 4;
-    // How many times a mill runs each conversion per turn, per mill tier
-    public int millRunsPerTier = 3;
-    public List<ResourceConversion> millConversions;
+    // How many times a processor runs each conversion per turn, per tier
+    public int processorRunsPerTier = 5;
     // Building the capital to this tier wins the game
     public int winTier = 7;
     // A list of settlers who have ventured forth
@@ -68,13 +63,21 @@ public class TurnManager : MonoBehaviour
     {
         if (Instance != null) return;
         Instance = this;
-        // Start by placing initial embark randomly
-        int x = Random.Range(0, hexWorldManager.latitude),
-            z = Random.Range(0, hexWorldManager.longitude);
+        // Embark on a random tile that can feed the capital, with its buildings ready
+        var candidates = new List<HexTile>();
+        foreach (var tile in hexWorldManager.tiles)
+            if (CanFeed(tile.resource)) candidates.Add(tile);
+        if (candidates.Count == 0)
+            foreach (var tile in hexWorldManager.tiles) candidates.Add(tile);
+        var embarkTile = candidates[Random.Range(0, candidates.Count)];
 
         var startResources = new ResourceCollection { resources = new List<ResourcePile>(embarkResources) }.Clone();
-        capital = FoundSettlement(hexWorldManager.tiles[x, z], startResources, 7, true);
-        Debug.Log("Embarked at " + x + ", " + z);
+        capital = FoundSettlement(embarkTile, startResources, 7, true);
+        if (capital.Producer != null) capital.hasProducer = true;
+        var processor = embarkTile.resource != null && !embarkTile.resource.isFood ? FoodProcessorFor(embarkTile.resource) : null;
+        if (processor != null) capital.SetProcessorTier(processor, 1);
+        capital.RefreshModels();
+        Debug.Log("Embarked at " + embarkTile);
         var controls = Camera.main != null ? Camera.main.GetComponent<PlayerControls>() : null;
         if (controls != null) controls.FocusOn(capital.tile.Surface, true);
 
@@ -101,7 +104,7 @@ public class TurnManager : MonoBehaviour
 
         foreach (var settlement in settlements.ToArray())
         {
-            settlement.AdvanceTurn(farmYield, millConversions, millRunsPerTier);
+            settlement.AdvanceTurn(processorRunsPerTier);
         }
         if (state != GameState.PLAYING) return;
 
@@ -156,32 +159,37 @@ public class TurnManager : MonoBehaviour
         Destroy(settlement);
     }
 
-    public bool IsBusy(Settlement settlement, ProjectType type) =>
-        projects.Exists(p => p.owner == settlement && p.type == type);
+    public bool IsBusy(Settlement settlement, ProjectType type, Building building = null) =>
+        projects.Exists(p => p.owner == settlement && p.type == type && (building == null || p.building == building));
 
-    private Project StartProject(Settlement owner, ProjectType type, string name, int turns, Action onComplete)
+    public Building ProducerFor(ResourceData resource) =>
+        buildings.Find(b => b.BuildingType == BuildingType.FARM && b.Produces(resource));
+
+    public IEnumerable<Building> Processors => buildings.FindAll(b => b.BuildingType == BuildingType.MILL);
+
+    public Building FoodProcessorFor(ResourceData resource) =>
+        buildings.Find(b => b.BuildingType == BuildingType.MILL && b.Converts(resource, true));
+
+    // Whether a settlement on a tile with this resource can make its own food
+    public bool CanFeed(ResourceData resource) =>
+        resource != null && ProducerFor(resource) != null && (resource.isFood || FoodProcessorFor(resource) != null);
+
+    private Project StartProject(Settlement owner, ProjectType type, string name, int turns, Action onComplete, Building building = null)
     {
-        var project = new Project { owner = owner, type = type, name = name, turnsLeft = Mathf.Max(1, turns), onComplete = onComplete };
+        var project = new Project { owner = owner, type = type, building = building, name = name, turnsLeft = Mathf.Max(1, turns), onComplete = onComplete };
         projects.Add(project);
         return project;
     }
 
     // ---- City upgrade ----
 
-    public ResourceCollection UpgradeCost(Settlement s)
-    {
-        int next = s.tier + 1;
-        if (capitolBuilding != null && next < capitolBuilding.tierBuildResources.Length)
-            return capitolBuilding.tierBuildResources[next];
-        return new ResourceCollection { resources = new List<ResourcePile>() };
-    }
+    public ResourceCollection UpgradeCost(Settlement s) => capitolBuilding.Cost(s.tier + 1);
 
     public int UpgradeTurns(Settlement s)
     {
         int next = s.tier + 1;
-        if (capitolBuilding != null && next < capitolBuilding.tierBuildTimes.Length && capitolBuilding.tierBuildTimes[next] > 0)
-            return capitolBuilding.tierBuildTimes[next];
-        return next;
+        return next < capitolBuilding.tierBuildTimes.Length && capitolBuilding.tierBuildTimes[next] > 0
+            ? capitolBuilding.tierBuildTimes[next] : next;
     }
 
     public bool CanUpgradeCity(Settlement s, out string why)
@@ -301,50 +309,51 @@ public class TurnManager : MonoBehaviour
             {
                 var from = path.nodes[i];
                 var to = path.nodes[i + 1];
-                if (from.RoadTo(to) < tier) hexWorldManager.SetRoad(from, to, tier);
+                if (from.RoadTo(to) < tier) hexWorldManager.SetRoad(from, to, tier, i * 0.35f);
             }
         });
     }
 
-    // ---- Farm ----
+    // ---- Producers (harvest the tile's resource) ----
 
-    public bool CanBuildFarm(Settlement s, out string why)
+    public bool CanBuildProducer(Settlement s, out string why)
     {
         why = null;
-        if (s.hasFarm || IsBusy(s, ProjectType.FARM)) why = "Already has a farm";
-        else if (!s.CanHaveFarm) why = "No primary resource on this tile";
-        else if (!s.resources.Has(farmCost)) why = "Needs " + farmCost;
+        var producer = s.Producer;
+        if (producer == null) why = "Nothing to harvest on this tile";
+        else if (s.hasProducer || IsBusy(s, ProjectType.PRODUCER)) why = "Already built";
+        else if (!s.resources.Has(producer.Cost(1))) why = "Needs " + producer.Cost(1);
         return why == null;
     }
 
-    public void BuildFarm(Settlement s)
+    public void BuildProducer(Settlement s)
     {
-        if (!CanBuildFarm(s, out _)) return;
-        s.resources.Remove(farmCost);
-        StartProject(s, ProjectType.FARM, "Farm at " + s.DisplayName, 1, () => { if (s != null) { s.hasFarm = true; s.RefreshModels(); } });
+        if (!CanBuildProducer(s, out _)) return;
+        var producer = s.Producer;
+        s.resources.Remove(producer.Cost(1));
+        StartProject(s, ProjectType.PRODUCER, producer.DisplayName + " at " + s.DisplayName, producer.BuildTime(1),
+            () => { if (s != null) { s.hasProducer = true; s.RefreshModels(); } }, producer);
     }
 
-    // ---- Mill ----
+    // ---- Processors (convert resources) ----
 
-    public ResourceCollection MillCost(Settlement s) => millCostPerTier.Clone(s.millTier + 1);
-
-    public int MillTurns(Settlement s) => s.millTier + 2;
-
-    public bool CanBuildMill(Settlement s, out string why)
+    public bool CanBuildProcessor(Settlement s, Building b, out string why)
     {
         why = null;
-        if (IsBusy(s, ProjectType.MILL)) why = "Mill under construction";
-        else if (s.millTier >= maxMillTier) why = "Mill is already max tier";
-        else if (!s.resources.Has(MillCost(s))) why = "Needs " + MillCost(s);
+        int next = s.ProcessorTier(b) + 1;
+        if (IsBusy(s, ProjectType.PROCESSOR, b)) why = "Under construction";
+        else if (next > b.MaxTier) why = "Already max tier";
+        else if (!s.resources.Has(b.Cost(next))) why = "Needs " + b.Cost(next);
         return why == null;
     }
 
-    public void BuildMill(Settlement s)
+    public void BuildProcessor(Settlement s, Building b)
     {
-        if (!CanBuildMill(s, out _)) return;
-        s.resources.Remove(MillCost(s));
-        int next = s.millTier + 1;
-        StartProject(s, ProjectType.MILL, "T" + next + " mill at " + s.DisplayName, MillTurns(s), () => { if (s != null) { s.millTier = next; s.RefreshModels(); } });
+        if (!CanBuildProcessor(s, b, out _)) return;
+        int next = s.ProcessorTier(b) + 1;
+        s.resources.Remove(b.Cost(next));
+        StartProject(s, ProjectType.PROCESSOR, "T" + next + " " + b.DisplayName + " at " + s.DisplayName, b.BuildTime(next),
+            () => { if (s != null) s.SetProcessorTier(b, next); }, b);
     }
 
     // ---- Shipments ----

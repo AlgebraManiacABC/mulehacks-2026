@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 265098d71eff437e966ba79352d058c3, type: 3}
-  m_Name: Ranch
+  m_Name: LobsterTraps
   m_EditorClassIdentifier: Assembly-CSharp::Building
   BuildingType: 1
-  displayName: Ranch
+  displayName: Lobster Traps
   tierBuildTimes: 0000000001000000
   tierBuildResources:
   - resources: []
@@ -23,8 +23,8 @@ MonoBehaviour:
   tierResourceGenerations:
   - resources: []
   - resources:
-    - resource: {fileID: 11400000, guid: 0250876f45f2d2b4ea8db89122cbf35d, type: 2}
-      amount: 8
+    - resource: {fileID: 11400000, guid: 4df08c92fd5dc4140a90808af520b26c, type: 2}
+      amount: 4
   tierResourceConversion: []
   tierModels:
-  - {fileID: 6161011283831274941, guid: 4787445b4b87d0e60c2a47d5f5a4c3a7, type: 3}
+  - {fileID: 4509434718956729204, guid: 24c5dd4255c55a7e841b88b8ca7e9564, type: 3}

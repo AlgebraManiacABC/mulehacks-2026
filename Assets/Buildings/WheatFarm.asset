@@ -10,12 +10,21 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 265098d71eff437e966ba79352d058c3, type: 3}
-  m_Name: Mill
+  m_Name: WheatFarm
   m_EditorClassIdentifier: Assembly-CSharp::Building
-  BuildingType: 2
-  tierBuildTimes: 
-  tierBuildResources: []
-  tierResourceGenerations: []
+  BuildingType: 1
+  displayName: Wheat Farm
+  tierBuildTimes: 0000000001000000
+  tierBuildResources:
+  - resources: []
+  - resources:
+    - resource: {fileID: 11400000, guid: 7640492bb15bd1c4abdac36aa20a9ff0, type: 2}
+      amount: 5
+  tierResourceGenerations:
+  - resources: []
+  - resources:
+    - resource: {fileID: 11400000, guid: 1dd0d2ba29f813141ac4717514eb9c3b, type: 2}
+      amount: 10
   tierResourceConversion: []
   tierModels:
   - {fileID: 8966681452490952040, guid: c662da1d2075153b236c1ea03c44f7c1, type: 3}

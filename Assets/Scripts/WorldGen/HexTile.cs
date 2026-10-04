@@ -22,8 +22,12 @@ public class HexTile : MonoBehaviour
     // Model positions, pointing at corners so they stay clear of roads
     public static readonly Vector3 CenterSlot = Vector3.zero;
     public static readonly Vector3 ResourceSlot = new Vector3(3.4f, 0f, 0f);
-    public static readonly Vector3 FarmSlot = new Vector3(-1.7f, 0f, 2.95f);
-    public static readonly Vector3 MillSlot = new Vector3(-1.7f, 0f, -2.95f);
+    public static readonly Vector3 ProducerSlot = new Vector3(-1.7f, 0f, 2.95f);
+    public static readonly Vector3[] ProcessorSlots =
+    {
+        new Vector3(-1.7f, 0f, -2.95f), new Vector3(1.7f, 0f, 2.95f),
+        new Vector3(-3.4f, 0f, 0f), new Vector3(1.7f, 0f, -2.95f)
+    };
 
     public GameObject Place(GameObject prefab, Vector3 slot, bool animate = false)
     {

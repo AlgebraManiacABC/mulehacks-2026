@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 265098d71eff437e966ba79352d058c3, type: 3}
-  m_Name: Ranch
+  m_Name: TeaPlantation
   m_EditorClassIdentifier: Assembly-CSharp::Building
   BuildingType: 1
-  displayName: Ranch
+  displayName: Tea Plantation
   tierBuildTimes: 0000000001000000
   tierBuildResources:
   - resources: []
@@ -23,8 +23,8 @@ MonoBehaviour:
   tierResourceGenerations:
   - resources: []
   - resources:
-    - resource: {fileID: 11400000, guid: 0250876f45f2d2b4ea8db89122cbf35d, type: 2}
-      amount: 8
+    - resource: {fileID: 11400000, guid: 42af0609ca4359140b0d3a6199ee1b0e, type: 2}
+      amount: 4
   tierResourceConversion: []
   tierModels:
-  - {fileID: 6161011283831274941, guid: 4787445b4b87d0e60c2a47d5f5a4c3a7, type: 3}
+  - {fileID: 2402764079971853498, guid: 0b7d17f0a1b3bf8369c0f17ad56c7060, type: 3}

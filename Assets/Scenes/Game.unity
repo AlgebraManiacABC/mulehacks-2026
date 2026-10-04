@@ -195,8 +195,20 @@ MonoBehaviour:
     amount: 10
   embarkBuilding: {fileID: 11400000, guid: a2c0a2b698a92a04fa10f62012c558d2, type: 2}
   capitolBuilding: {fileID: 11400000, guid: 92de390c41af1854eb49fc866f920b58, type: 2}
-  farmBuilding: {fileID: 11400000, guid: a6b2964911b53a14e8c90dd788f780c1, type: 2}
-  millBuilding: {fileID: 11400000, guid: 08da974088d7308daf02ff0cac1d3abc, type: 2}
+  buildings:
+  - {fileID: 11400000, guid: 37ae2b12733b40b8e2e3769c6c55dde0, type: 2}
+  - {fileID: 11400000, guid: a6b2964911b53a14e8c90dd788f780c1, type: 2}
+  - {fileID: 11400000, guid: 52256c49ee82d847600bf186a2b647fc, type: 2}
+  - {fileID: 11400000, guid: 3b9619ae79bebd72980643cab5284423, type: 2}
+  - {fileID: 11400000, guid: 94ed733e4b34608693e68d2351324671, type: 2}
+  - {fileID: 11400000, guid: 4154231f2b1dfea673bad49a9bd2e8c6, type: 2}
+  - {fileID: 11400000, guid: 1983a563f4d936a7c9c6e18403c8e26c, type: 2}
+  - {fileID: 11400000, guid: 9fc2a8b974d7780f12f4eb2b778413ac, type: 2}
+  - {fileID: 11400000, guid: 536074784876b6bbd32a81418fb69e69, type: 2}
+  - {fileID: 11400000, guid: ffcf389527bb52a6f3d1438064da64db, type: 2}
+  - {fileID: 11400000, guid: 08da974088d7308daf02ff0cac1d3abc, type: 2}
+  - {fileID: 11400000, guid: c294d9817e10c050319fd5fcb337197a, type: 2}
+  - {fileID: 11400000, guid: 3b63c967f6ee18cf8a839a8889812e98, type: 2}
   settlerPrefab: {fileID: 7551007321611843285, guid: 54b03f24c424c09ac01e9458385d01c9, type: 3}
   caravanPrefab: {fileID: 2951221049264818764, guid: aa151eb58e06c11de0ae72b952ec0f22, type: 3}
   hexWorldManager: {fileID: 1209295969}
@@ -209,23 +221,7 @@ MonoBehaviour:
     - resource: {fileID: 11400000, guid: 871ce3e66b7884446bdccf7400486c80, type: 2}
       amount: 5
   settlerCount: 2
-  farmCost:
-    resources:
-    - resource: {fileID: 11400000, guid: 7640492bb15bd1c4abdac36aa20a9ff0, type: 2}
-      amount: 5
-  farmYield: 6
-  millCostPerTier:
-    resources:
-    - resource: {fileID: 11400000, guid: 7640492bb15bd1c4abdac36aa20a9ff0, type: 2}
-      amount: 10
-    - resource: {fileID: 11400000, guid: 871ce3e66b7884446bdccf7400486c80, type: 2}
-      amount: 5
-  maxMillTier: 4
-  millRunsPerTier: 3
-  millConversions:
-  - {fileID: 11400000, guid: e8160bbcb140efc4b90c1b541bad96cc, type: 2}
-  - {fileID: 11400000, guid: b1cf190e30f30ea4aa35974c83cbfc37, type: 2}
-  - {fileID: 11400000, guid: 4580248ca2ca49f40831f5c50994ce6b, type: 2}
+  processorRunsPerTier: 5
   winTier: 7
   activeSettlers: []
   currentTurn: 0

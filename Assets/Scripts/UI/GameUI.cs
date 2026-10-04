@@ -213,7 +213,7 @@ public class GameUI : MonoBehaviour
     {
         GUILayout.Label(s.DisplayName + "  T" + s.tier
                         + "\nPopulation " + s.population + "/" + s.MaxPopulation
-                        + "\nFarm: " + (s.hasFarm ? "yes" : "no") + "   Mill: " + (s.millTier > 0 ? "T" + s.millTier : "no")
+                        + "\nBuildings: " + s.BuildingSummary()
                         + "\nResources: " + s.resources);
 
         switch (pending)
@@ -258,17 +258,28 @@ public class GameUI : MonoBehaviour
                 queued = () => tm.UpgradeCity(s);
         }
 
-        if (!s.hasFarm)
+        var producer = s.Producer;
+        if (producer == null)
+            ActionButton("Nothing to harvest here", false, null);
+        else if (!s.hasProducer)
         {
-            bool ok = tm.CanBuildFarm(s, out string why);
-            if (ActionButton("Build farm (1 turn, " + tm.farmCost + ")", ok, why)) queued = () => tm.BuildFarm(s);
+            bool ok = tm.CanBuildProducer(s, out string why);
+            var gen = producer.Generation(1);
+            if (ActionButton("Build " + producer.DisplayName + " (" + producer.BuildTime(1) + " turns, " + producer.Cost(1)
+                             + ") - makes " + gen + "/turn", ok, why))
+                queued = () => tm.BuildProducer(s);
         }
 
+        foreach (var b in tm.Processors)
         {
-            bool ok = tm.CanBuildMill(s, out string why);
-            string label = (s.millTier == 0 ? "Build mill" : "Upgrade mill to T" + (s.millTier + 1))
-                           + " (" + tm.MillTurns(s) + " turns, " + tm.MillCost(s) + ")";
-            if (ActionButton(label, ok, why)) queued = () => tm.BuildMill(s);
+            int current = s.ProcessorTier(b);
+            if (current >= b.MaxTier) continue;
+            int next = current + 1;
+            bool ok = tm.CanBuildProcessor(s, b, out string why);
+            string label = (current == 0 ? "Build " + b.DisplayName : "Upgrade " + b.DisplayName + " to T" + next)
+                           + " [" + b.ConversionSummary() + "] (" + b.BuildTime(next) + " turns, " + b.Cost(next) + ")";
+            var building = b;
+            if (ActionButton(label, ok, why)) queued = () => tm.BuildProcessor(s, building);
         }
 
         bool others = tm.settlements.Count > 1;

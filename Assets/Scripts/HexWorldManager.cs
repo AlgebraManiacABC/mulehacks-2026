@@ -131,7 +131,8 @@ public class HexWorldManager : MonoBehaviour
         return null;
     }
 
-    public void SetRoad(HexTile a, HexTile b, RoadTier tier)
+    // delay staggers the build animation along a multi-tile road
+    public void SetRoad(HexTile a, HexTile b, RoadTier tier, float delay = 0f)
     {
         for (int i = 0; i < 6; i++)
         {
@@ -141,7 +142,8 @@ public class HexWorldManager : MonoBehaviour
 
         int ida = a.GetInstanceID(), idb = b.GetInstanceID();
         var key = ida < idb ? (ida, idb) : (idb, ida);
-        if (!roadSegments.TryGetValue(key, out var road))
+        bool isNew = !roadSegments.TryGetValue(key, out var road);
+        if (isNew)
         {
             var obj = GameObject.CreatePrimitive(PrimitiveType.Cube);
             obj.name = "Road " + a + "-" + b;
@@ -149,14 +151,15 @@ public class HexWorldManager : MonoBehaviour
             if (roadMaterial != null) obj.GetComponent<Renderer>().sharedMaterial = roadMaterial;
             road = obj.transform;
             road.SetParent(transform);
-            Vector3 from = a.Surface, to = b.Surface;
-            road.position = (from + to) / 2f + Vector3.up * 0.05f;
-            road.rotation = Quaternion.LookRotation(to - from);
+            road.rotation = Quaternion.LookRotation(b.Surface - a.Surface);
+            road.localScale = new Vector3(0f, 0.12f, 0f);
+            road.gameObject.AddComponent<RoadAnimation>();
             roadSegments[key] = road;
         }
         float t = (float)tier / (float)RoadTier.MAX_TIER;
-        float length = Vector3.Distance(a.Surface, b.Surface);
-        road.localScale = new Vector3(0.5f + 0.7f * t, 0.12f, length);
+        Vector3 lift = Vector3.up * 0.05f;
+        road.GetComponent<RoadAnimation>().Play(a.Surface + lift, b.Surface + lift,
+            isNew ? 0.5f + 0.7f * t : road.localScale.x, 0.5f + 0.7f * t, isNew, delay);
         var block = new MaterialPropertyBlock();
         // Wooden tiers are brown, stone tiers gray
         block.SetColor("_BaseColor", tier >= RoadTier.TIER_3

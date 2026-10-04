@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 265098d71eff437e966ba79352d058c3, type: 3}
+  m_Name: Gristmill
+  m_EditorClassIdentifier: Assembly-CSharp::Building
+  BuildingType: 2
+  displayName: Gristmill
+  tierBuildTimes: 0000000002000000030000000400000005000000
+  tierBuildResources:
+  - resources: []
+  - resources:
+    - resource: {fileID: 11400000, guid: 7640492bb15bd1c4abdac36aa20a9ff0, type: 2}
+      amount: 10
+    - resource: {fileID: 11400000, guid: 871ce3e66b7884446bdccf7400486c80, type: 2}
+      amount: 5
+  - resources:
+    - resource: {fileID: 11400000, guid: 7640492bb15bd1c4abdac36aa20a9ff0, type: 2}
+      amount: 20
+    - resource: {fileID: 11400000, guid: 871ce3e66b7884446bdccf7400486c80, type: 2}
+      amount: 10
+  - resources:
+    - resource: {fileID: 11400000, guid: 7640492bb15bd1c4abdac36aa20a9ff0, type: 2}
+      amount: 30
+    - resource: {fileID: 11400000, guid: 871ce3e66b7884446bdccf7400486c80, type: 2}
+      amount: 15
+  - resources:
+    - resource: {fileID: 11400000, guid: 7640492bb15bd1c4abdac36aa20a9ff0, type: 2}
+      amount: 40
+    - resource: {fileID: 11400000, guid: 871ce3e66b7884446bdccf7400486c80, type: 2}
+      amount: 20
+  tierResourceGenerations: []
+  tierResourceConversion:
+  - {fileID: 11400000, guid: e8160bbcb140efc4b90c1b541bad96cc, type: 2}
+  tierModels:
+  - {fileID: 3139305561831948575, guid: 1eb5e493237285010d9220d3470e58eb, type: 3}
