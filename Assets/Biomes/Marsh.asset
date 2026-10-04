@@ -14,6 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BiomeData
   biomeName: Marsh
   material: {fileID: 2100000, guid: 727e1c3b50ddbe1173b9853234847a3d, type: 2}
+  elevation: 0.35
+  moisture: 0.8
   resourcesPossible:
   - resource: {fileID: 11400000, guid: e887aeed84b6df64f839eeea0964bffe, type: 2}
     probability: 0.45

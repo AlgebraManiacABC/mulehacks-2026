@@ -14,6 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BiomeData
   biomeName: Desert
   material: {fileID: 2100000, guid: 2d079cebab2bdf2cb97b7492b56cdb55, type: 2}
+  elevation: 0.4
+  moisture: 0.15
   resourcesPossible:
   - resource: {fileID: 11400000, guid: 8486317f4bf2278458c66cc41569b3b1, type: 2}
     probability: 0.3

@@ -14,6 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BiomeData
   biomeName: Grasslands
   material: {fileID: 2100000, guid: e96dcc913d428b4479dc3524ecab56ef, type: 2}
+  elevation: 0.45
+  moisture: 0.45
   resourcesPossible:
   - resource: {fileID: 11400000, guid: 1dd0d2ba29f813141ac4717514eb9c3b, type: 2}
     probability: 0.2

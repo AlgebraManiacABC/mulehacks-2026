@@ -14,6 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BiomeData
   biomeName: Coast
   material: {fileID: 2100000, guid: d33fdf75ddd84ff62cddaf892cc20fcc, type: 2}
+  elevation: 0.15
+  moisture: 0.55
   resourcesPossible:
   - resource: {fileID: 11400000, guid: 1b5dccfe48876aa4ea2a1643c1981ceb, type: 2}
     probability: 0.45

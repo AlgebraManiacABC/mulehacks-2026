@@ -14,6 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BiomeData
   biomeName: Forest
   material: {fileID: 2100000, guid: fd77777d3d6b66b48b15c6ef87c992ff, type: 2}
+  elevation: 0.6
+  moisture: 0.7
   resourcesPossible:
   - resource: {fileID: 11400000, guid: 7640492bb15bd1c4abdac36aa20a9ff0, type: 2}
     probability: 0.75

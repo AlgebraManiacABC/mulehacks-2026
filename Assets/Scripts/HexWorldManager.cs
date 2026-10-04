@@ -20,6 +20,7 @@ public class HexWorldManager : MonoBehaviour
 
     [SerializeField]
     public List<BiomeData> biomes;
+    public WorldGenSettings worldGen = new WorldGenSettings();
     public Material highlightMaterial;
     public Material roadMaterial;
 
@@ -37,10 +38,10 @@ public class HexWorldManager : MonoBehaviour
     {
         if (Instance != null) return;
         Instance = this;
-        // The scene was just loaded; just create a world for now
-        Random.InitState(Time.frameCount);
-        
-        var biomeMap = GenerateBiomeRegions();
+        var generator = new WorldGenerator(worldGen, latitude, longitude);
+        generator.Generate(biomes);
+        Random.InitState(generator.seed);
+        Debug.Log("World seed " + generator.seed);
 
         // Load prefab hex for each position
         tiles = new HexTile[latitude, longitude];
@@ -48,12 +49,13 @@ public class HexWorldManager : MonoBehaviour
         {
             for (int z = 0; z < longitude; z++)
             {
-                GameObject curHexObj = Instantiate(hexPrefab, HexToWorld(x, z, 5f), Quaternion.identity);
+                Vector3 position = HexToWorld(x, z, 5f) + Vector3.up * generator.Height(x, z);
+                GameObject curHexObj = Instantiate(hexPrefab, position, Quaternion.identity);
                 curHexObj.name = "Hex(" + x + ", " + z + ")";
                 HexTile curHex = curHexObj.GetComponent<HexTile>();
                 curHex.x = x;
                 curHex.z = z;
-                curHex.biome = biomeMap[x, z];
+                curHex.biome = generator.biomes[x, z];
                 MeshRenderer hexRenderer = curHex.GetComponentInChildren<MeshRenderer>();
                 if (curHex.biome.material != null)
                 {
@@ -207,43 +209,5 @@ public class HexWorldManager : MonoBehaviour
         renderer.sharedMaterial = highlightMaterial;
         renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         return frame;
-    }
-
-    // Scatter region seeds (every biome gets at least one) and give each tile its nearest seed's biome
-    private BiomeData[,] GenerateBiomeRegions()
-    {
-        int seedCount = Mathf.Max(biomes.Count, latitude * longitude / 8);
-        var seeds = new List<(int x, int z, BiomeData biome)>();
-        var order = new List<BiomeData>(biomes);
-        for (int i = 0; i < seedCount; i++)
-        {
-            if (i % biomes.Count == 0)
-            {
-                for (int j = order.Count - 1; j > 0; j--)
-                {
-                    int k = Random.Range(0, j + 1);
-                    (order[j], order[k]) = (order[k], order[j]);
-                }
-            }
-            seeds.Add((Random.Range(0, latitude), Random.Range(0, longitude), order[i % biomes.Count]));
-        }
-
-        var map = new BiomeData[latitude, longitude];
-        for (int x = 0; x < latitude; x++)
-        {
-            for (int z = 0; z < longitude; z++)
-            {
-                int best = int.MaxValue;
-                foreach (var seed in seeds)
-                {
-                    // Random tie-breaking keeps region borders ragged
-                    int d = Distance(x, z, seed.x, seed.z) * 4 + Random.Range(0, 3);
-                    if (d >= best) continue;
-                    best = d;
-                    map[x, z] = seed.biome;
-                }
-            }
-        }
-        return map;
     }
 }

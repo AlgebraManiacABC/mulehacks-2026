@@ -14,6 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BiomeData
   biomeName: Highlands
   material: {fileID: 2100000, guid: f3e257467b2815b962ce804caec08473, type: 2}
+  elevation: 0.65
+  moisture: 0.3
   resourcesPossible:
   - resource: {fileID: 11400000, guid: 42af0609ca4359140b0d3a6199ee1b0e, type: 2}
     probability: 0.3
