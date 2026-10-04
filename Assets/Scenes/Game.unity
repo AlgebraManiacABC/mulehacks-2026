@@ -129,6 +129,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1209295970}
   - component: {fileID: 1209295969}
+  - component: {fileID: 1209295971}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -169,6 +170,25 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1209295971
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1209295968}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 023982b693583c644bc65a88983cb983, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TurnManager
+  embarkResources: []
+  embarkBuilding: {fileID: 11400000, guid: a2c0a2b698a92a04fa10f62012c558d2, type: 2}
+  hexWorldManager: {fileID: 1209295969}
+  settlerResourceCost:
+    resources: []
+  activeSettlers: []
+  currentTurn: 0
 --- !u!1 &1288573222
 GameObject:
   m_ObjectHideFlags: 0
@@ -308,6 +328,7 @@ GameObject:
   - component: {fileID: 1768712771}
   - component: {fileID: 1768712770}
   - component: {fileID: 1768712773}
+  - component: {fileID: 1768712774}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -433,6 +454,25 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
+--- !u!114 &1768712774
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1768712769}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 52fbe0110491fe643a898dd6deabdbb5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerControls
+  initialY: 10
+  panSpeed: 40
+  lookSensitivity: 0.15
+  minPitch: -89
+  maxPitch: 89
+  lookSmoothing: 15
+  panSmoothing: 7
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

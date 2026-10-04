@@ -10,11 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4f7e2a09613741dd8dff0874dd00639c, type: 3}
-  m_Name: Bread
+  m_Name: Flour
   m_EditorClassIdentifier: Assembly-CSharp::ResourceData
-  resourceName: Bread
+  resourceName: Flour
   isPrimary: 0
   roadResourceType: 0
   isArchitectural: 0
   isFood: 1
   isLuxury: 0
+  display: {fileID: 0}
