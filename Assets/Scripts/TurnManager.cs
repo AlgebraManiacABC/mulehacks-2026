@@ -14,6 +14,7 @@ public class Project
     public Settlement owner;
     public int turnsLeft;
     public Action onComplete;
+    public RouteMover mover;
 }
 
 /**
@@ -35,6 +36,7 @@ public class TurnManager : MonoBehaviour
     public Building farmBuilding;
     public Building millBuilding;
     public GameObject settlerPrefab;
+    public GameObject caravanPrefab;
     // The HexWorldManager, for ease of communication
     [SerializeField]
     public HexWorldManager hexWorldManager;
@@ -103,20 +105,26 @@ public class TurnManager : MonoBehaviour
         }
         if (state != GameState.PLAYING) return;
 
-        foreach (var project in projects.ToArray())
-        {
-            if (--project.turnsLeft > 0) continue;
-            projects.Remove(project);
-            project.onComplete();
-        }
-
         foreach (var group in activeSettlers.ToArray())
         {
             int result = group.AdvanceTurn();
             if (result == 0) continue;
             activeSettlers.Remove(group);
-            if (result > 0) SettlersArrive(group);
-            Destroy(group.gameObject);
+            if (result > 0)
+            {
+                SettlersArrive(group);
+                group.mover.Arrive();
+            }
+            else Destroy(group.gameObject);
+        }
+
+        foreach (var project in projects.ToArray())
+        {
+            if (project.mover != null) project.mover.Step();
+            if (--project.turnsLeft > 0) continue;
+            projects.Remove(project);
+            if (project.mover != null) project.mover.Arrive();
+            project.onComplete();
         }
 
         currentTurn++;
@@ -151,9 +159,11 @@ public class TurnManager : MonoBehaviour
     public bool IsBusy(Settlement settlement, ProjectType type) =>
         projects.Exists(p => p.owner == settlement && p.type == type);
 
-    private void StartProject(Settlement owner, ProjectType type, string name, int turns, Action onComplete)
+    private Project StartProject(Settlement owner, ProjectType type, string name, int turns, Action onComplete)
     {
-        projects.Add(new Project { owner = owner, type = type, name = name, turnsLeft = Mathf.Max(1, turns), onComplete = onComplete });
+        var project = new Project { owner = owner, type = type, name = name, turnsLeft = Mathf.Max(1, turns), onComplete = onComplete };
+        projects.Add(project);
+        return project;
     }
 
     // ---- City upgrade ----
@@ -197,33 +207,49 @@ public class TurnManager : MonoBehaviour
 
     public int SettlerTurns(Settlement from, HexTile to) => HexWorldManager.Distance(from.tile, to) * from.tier;
 
-    public bool CanSendSettlers(Settlement from, HexTile to, out string why)
+    public bool CanSendSettlers(Settlement from, HexTile to, out string why) =>
+        CanSendSettlers(from, to, null, out why);
+
+    // supplies: optional caravan that follows the settlers and arrives a turn after them
+    public bool CanSendSettlers(Settlement from, HexTile to, ResourceCollection supplies, out string why)
     {
         why = null;
+        var total = settlerResourceCost.Clone();
+        if (supplies != null) total.Add(supplies);
         if (to.settlement != null) why = "Tile is already settled";
         else if (from.population <= settlerCount) why = "Needs more than " + settlerCount + " population";
-        else if (!from.resources.Has(settlerResourceCost)) why = "Needs " + settlerResourceCost;
+        else if (!from.resources.Has(total)) why = "Needs " + total;
         return why == null;
     }
 
-    public void SendSettlers(Settlement from, HexTile to)
+    public void SendSettlers(Settlement from, HexTile to, ResourceCollection supplies)
     {
-        if (!CanSendSettlers(from, to, out _)) return;
+        if (!CanSendSettlers(from, to, supplies, out _)) return;
         from.resources.Remove(settlerResourceCost);
         from.population -= settlerCount;
 
-        var marker = settlerPrefab != null ? Instantiate(settlerPrefab) : GameObject.CreatePrimitive(PrimitiveType.Capsule);
-        marker.name = "Settlers " + from.tile + " -> " + to;
-        foreach (var c in marker.GetComponentsInChildren<Collider>()) Destroy(c);
+        int turns = Mathf.Max(1, SettlerTurns(from, to));
+        var route = hexWorldManager.FindPath(from.tile, to, false);
+        var mover = RouteMover.Create(settlerPrefab, route, turns);
+        mover.name = "Settlers " + from.tile + " -> " + to;
 
-        var group = marker.AddComponent<SettlerGroup>();
+        var group = mover.gameObject.AddComponent<SettlerGroup>();
         group.origin = from.tile;
         group.destination = to;
-        group.totalTurns = group.turnsLeft = Mathf.Max(1, SettlerTurns(from, to));
+        group.totalTurns = group.turnsLeft = turns;
         group.resources = settlerResourceCost.Clone();
         group.settlers = settlerCount;
-        group.SnapToRoute();
+        group.mover = mover;
         activeSettlers.Add(group);
+
+        if (supplies == null || supplies.resources.Count == 0) return;
+        from.resources.Remove(supplies);
+        var caravan = StartProject(from, ProjectType.SHIPMENT, "Supplies " + from.tile + " -> " + to + ": " + supplies, turns + 1, () =>
+        {
+            if (to.settlement != null) to.settlement.resources.Add(supplies);
+            else if (from != null) from.resources.Add(supplies);
+        });
+        caravan.mover = RouteMover.Create(caravanPrefab, route, turns + 1);
     }
 
     // ---- Roads ----
@@ -330,16 +356,17 @@ public class TurnManager : MonoBehaviour
         var path = from == to ? null : hexWorldManager.FindPath(from.tile, to.tile);
         if (from == to) why = "Pick a different settlement";
         else if (path == null) why = "No road connects these settlements";
-        else turns = path.CalculateCost();
+        else turns = path.ShippingTurns();
         return why == null;
     }
 
     public void Ship(Settlement from, Settlement to, ResourceCollection cargo)
     {
         if (!CanShip(from, to, out int turns, out _) || from.resources.Remove(cargo) < 0) return;
-        StartProject(from, ProjectType.SHIPMENT, "Shipment " + from.tile + " -> " + to.tile + ": " + cargo, turns, () =>
+        var shipment = StartProject(from, ProjectType.SHIPMENT, "Shipment " + from.tile + " -> " + to.tile + ": " + cargo, turns, () =>
         {
             if (to != null) to.resources.Add(cargo);
         });
+        shipment.mover = RouteMover.Create(caravanPrefab, hexWorldManager.FindPath(from.tile, to.tile), turns);
     }
 }

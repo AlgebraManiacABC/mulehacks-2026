@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEngine;
 
 public class Path
 {
@@ -8,33 +9,16 @@ public class Path
 
     public int Length => nodes.Count - 1;
 
-    public int CalculateCost()
+    // Turns for a shipment along existing roads: each step takes 2 / road tier, rounded up overall
+    public int ShippingTurns()
     {
-        int cost = 0;
+        float turns = 0f;
         for (int i = 0; i < nodes.Count - 1; i++)
         {
-            cost += CalculateCost(nodes[i], nodes[i + 1]);
+            int tier = (int)nodes[i].RoadTo(nodes[i + 1]);
+            turns += tier > 0 ? 2f / tier : 2f;
         }
-
-        return cost;
-    }
-
-    /**
-     * HexTile a and b must be neighbors
-     * @return Cost of the trip from a to b, or -1 if not neighbors or not connected by road
-     */
-    public static int CalculateCost(HexTile a, HexTile b)
-    {
-        for (int i = 0; i < a.connections.Length; i++)
-        {
-            if (a.connections[i] == b)
-            {
-                if (a.roads[i] == RoadTier.NO_ROAD) return -1;
-                return (int)RoadTier.MAX_TIER / (int)a.roads[i];
-            }
-        }
-
-        return -1;
+        return Mathf.Max(1, Mathf.CeilToInt(turns));
     }
 
     // The worst road tier along this path

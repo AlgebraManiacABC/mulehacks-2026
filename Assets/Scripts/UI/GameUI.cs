@@ -5,14 +5,20 @@ using UnityEngine.SceneManagement;
 
 public class GameUI : MonoBehaviour
 {
-    private enum Pending { NONE, SETTLER_SOURCE, ROAD_TARGET, SHIP_TARGET, SHIP_AMOUNTS }
+    private enum Pending { NONE, SETTLER_SOURCE, SETTLER_SUPPLIES, ROAD_TARGET, SHIP_TARGET, SHIP_AMOUNTS }
 
-    private const int FontSize = 16;
+    private const int FontSize = 18;
+    // The UI is laid out for this screen height and scaled up on larger screens
+    private const float ReferenceHeight = 900f;
 
     private TurnManager tm;
     private HexTile selected;
     private Pending pending;
     private Settlement shipTo;
+    private Settlement settlerFrom;
+    private float scale = 1f;
+    private float W => Screen.width / scale;
+    private float H => Screen.height / scale;
     private readonly Dictionary<ResourceData, int> cargo = new();
     private readonly List<Rect> uiRects = new();
     private Vector2 panelScroll, projectScroll;
@@ -45,7 +51,7 @@ public class GameUI : MonoBehaviour
         var mouse = Mouse.current;
         if (mouse == null || !mouse.leftButton.wasPressedThisFrame) return;
         Vector2 pos = mouse.position.ReadValue();
-        Vector2 guiPos = new Vector2(pos.x, Screen.height - pos.y);
+        Vector2 guiPos = new Vector2(pos.x, Screen.height - pos.y) / scale;
         foreach (var r in uiRects)
             if (r.Contains(guiPos)) return;
 
@@ -87,6 +93,8 @@ public class GameUI : MonoBehaviour
     private void OnGUI()
     {
         if (Event.current.type == EventType.Layout) uiRects.Clear();
+        scale = Mathf.Max(1f, Screen.height / ReferenceHeight);
+        GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
         GUI.skin.label.wordWrap = true;
         GUI.skin.label.richText = true;
         GUI.skin.label.fontSize = GUI.skin.button.fontSize = GUI.skin.box.fontSize = FontSize;
@@ -111,7 +119,7 @@ public class GameUI : MonoBehaviour
 
     private void DrawTopBar()
     {
-        Area(new Rect(10, 10, Screen.width - 20, 44));
+        Area(new Rect(10, 10, W - 20, 48));
         GUILayout.BeginHorizontal();
         var capital = tm.capital;
         GUILayout.Label("Turn " + tm.currentTurn
@@ -119,14 +127,14 @@ public class GameUI : MonoBehaviour
                         + "    Capital pop " + capital.population
                         + "    Settlements " + tm.settlements.Count
                         + "    Settler groups " + tm.activeSettlers.Count);
-        if (GUILayout.Button("Next Turn (Enter)", GUILayout.Width(190), GUILayout.Height(32))) queued = tm.AdvanceTurn;
+        if (GUILayout.Button("Next Turn (Enter)", GUILayout.Width(200), GUILayout.Height(34))) queued = tm.AdvanceTurn;
         GUILayout.EndHorizontal();
         GUILayout.EndArea();
     }
 
     private void DrawProjects()
     {
-        Area(new Rect(Screen.width - 350, 64, 340, 300));
+        Area(new Rect(W - 390, 68, 380, 320));
         GUILayout.Label("<b>In progress</b>");
         projectScroll = GUILayout.BeginScrollView(projectScroll);
         foreach (var p in tm.projects)
@@ -140,7 +148,7 @@ public class GameUI : MonoBehaviour
 
     private void DrawTilePanel()
     {
-        Area(new Rect(10, 64, 420, Screen.height - 74));
+        Area(new Rect(10, 68, 460, H - 78));
         panelScroll = GUILayout.BeginScrollView(panelScroll);
 
         string resource = selected.resource != null
@@ -158,6 +166,11 @@ public class GameUI : MonoBehaviour
 
     private void DrawEmptyTileActions()
     {
+        if (pending == Pending.SETTLER_SUPPLIES && settlerFrom != null)
+        {
+            DrawSettlerSupplies();
+            return;
+        }
         if (pending != Pending.SETTLER_SOURCE)
         {
             if (ActionButton("Send settlers here...", tm.settlements.Count > 0, null)) pending = Pending.SETTLER_SOURCE;
@@ -170,12 +183,30 @@ public class GameUI : MonoBehaviour
             bool ok = tm.CanSendSettlers(from, selected, out string why);
             if (ActionButton(from.DisplayName + " - " + tm.SettlerTurns(from, selected) + " turns", ok, why))
             {
-                var to = selected;
-                queued = () => tm.SendSettlers(from, to);
-                pending = Pending.NONE;
+                settlerFrom = from;
+                cargo.Clear();
+                pending = Pending.SETTLER_SUPPLIES;
             }
         }
         if (GUILayout.Button("Cancel")) pending = Pending.NONE;
+    }
+
+    private void DrawSettlerSupplies()
+    {
+        var from = settlerFrom;
+        int turns = Mathf.Max(1, tm.SettlerTurns(from, selected));
+        GUILayout.Label("Settlers from " + from.DisplayName + " arrive in " + turns + " turns carrying " + tm.settlerResourceCost + ".");
+        GUILayout.Label("Optional supply caravan (arrives in " + (turns + 1) + " turns):");
+        var supplies = DrawCargoPicker(from, tm.settlerResourceCost);
+
+        bool ok = tm.CanSendSettlers(from, selected, supplies, out string why);
+        if (ActionButton(supplies.resources.Count > 0 ? "Send settlers + caravan" : "Send settlers", ok, why))
+        {
+            var to = selected;
+            queued = () => tm.SendSettlers(from, to, supplies);
+            pending = Pending.NONE;
+        }
+        if (GUILayout.Button("Back")) pending = Pending.SETTLER_SOURCE;
     }
 
     private void DrawSettlementActions(Settlement s)
@@ -258,21 +289,7 @@ public class GameUI : MonoBehaviour
             return;
         }
         GUILayout.Label("Send to " + shipTo.DisplayName + " (" + turns + " turns):");
-        var shipment = new ResourceCollection { resources = new List<ResourcePile>() };
-        foreach (var pile in from.resources.resources)
-        {
-            cargo.TryGetValue(pile.resource, out int amount);
-            GUILayout.BeginHorizontal();
-            GUILayout.Label(pile.resource.resourceName + " (" + pile.amount + ")", GUILayout.Width(150));
-            if (GUILayout.Button("-5", GUILayout.Width(40))) amount -= 5;
-            GUILayout.Label(amount.ToString(), GUILayout.Width(44));
-            if (GUILayout.Button("+5", GUILayout.Width(40))) amount += 5;
-            if (GUILayout.Button("All", GUILayout.Width(50))) amount = pile.amount;
-            GUILayout.EndHorizontal();
-            amount = Mathf.Clamp(amount, 0, pile.amount);
-            cargo[pile.resource] = amount;
-            shipment.Add(pile.resource, amount);
-        }
+        var shipment = DrawCargoPicker(from, null);
 
         if (ActionButton("Send", shipment.resources.Count > 0, "Choose something to send"))
         {
@@ -281,6 +298,28 @@ public class GameUI : MonoBehaviour
             pending = Pending.NONE;
         }
         if (GUILayout.Button("Cancel")) pending = Pending.NONE;
+    }
+
+    // Amount pickers for each resource in stock, minus anything reserved
+    private ResourceCollection DrawCargoPicker(Settlement from, ResourceCollection reserved)
+    {
+        var picked = new ResourceCollection { resources = new List<ResourcePile>() };
+        foreach (var pile in from.resources.resources)
+        {
+            int available = pile.amount - (reserved != null ? reserved.Amount(pile.resource) : 0);
+            cargo.TryGetValue(pile.resource, out int amount);
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(pile.resource.resourceName + " (" + available + ")", GUILayout.Width(160));
+            if (GUILayout.Button("-5", GUILayout.Width(46))) amount -= 5;
+            GUILayout.Label(amount.ToString(), GUILayout.Width(48));
+            if (GUILayout.Button("+5", GUILayout.Width(46))) amount += 5;
+            if (GUILayout.Button("All", GUILayout.Width(56))) amount = available;
+            GUILayout.EndHorizontal();
+            amount = Mathf.Clamp(amount, 0, Mathf.Max(0, available));
+            cargo[pile.resource] = amount;
+            picked.Add(pile.resource, amount);
+        }
+        return picked;
     }
 
     // A button that is grayed out with the reason shown when unavailable
@@ -296,7 +335,7 @@ public class GameUI : MonoBehaviour
 
     private void DrawEndScreen()
     {
-        var rect = new Rect(Screen.width / 2f - 210, Screen.height / 2f - 100, 420, 200);
+        var rect = new Rect(W / 2f - 230, H / 2f - 110, 460, 220);
         GUILayout.BeginArea(rect, GUI.skin.box);
         GUILayout.Label(tm.state == GameState.WON
             ? "<b>Victory!</b>\nYour capital reached tier " + tm.winTier + " on turn " + tm.currentTurn + "."

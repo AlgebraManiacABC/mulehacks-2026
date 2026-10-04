@@ -25,11 +25,12 @@ public class HexTile : MonoBehaviour
     public static readonly Vector3 FarmSlot = new Vector3(-1.7f, 0f, 2.95f);
     public static readonly Vector3 MillSlot = new Vector3(-1.7f, 0f, -2.95f);
 
-    public GameObject Place(GameObject prefab, Vector3 slot)
+    public GameObject Place(GameObject prefab, Vector3 slot, bool animate = false)
     {
         if (prefab == null) return null;
         var obj = Instantiate(prefab, transform);
         obj.transform.localPosition = new Vector3(slot.x, surfaceY - transform.position.y, slot.z);
+        if (animate) obj.AddComponent<BuildAnimation>();
         return obj;
     }
 

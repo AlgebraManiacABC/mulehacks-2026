@@ -198,12 +198,15 @@ MonoBehaviour:
   farmBuilding: {fileID: 11400000, guid: a6b2964911b53a14e8c90dd788f780c1, type: 2}
   millBuilding: {fileID: 11400000, guid: 08da974088d7308daf02ff0cac1d3abc, type: 2}
   settlerPrefab: {fileID: 7551007321611843285, guid: 54b03f24c424c09ac01e9458385d01c9, type: 3}
+  caravanPrefab: {fileID: 2951221049264818764, guid: aa151eb58e06c11de0ae72b952ec0f22, type: 3}
   hexWorldManager: {fileID: 1209295969}
   settlerResourceCost:
     resources:
     - resource: {fileID: 11400000, guid: aeb916a6cd38b7f429d3520d9d4ffe9c, type: 2}
-      amount: 10
+      amount: 15
     - resource: {fileID: 11400000, guid: 7640492bb15bd1c4abdac36aa20a9ff0, type: 2}
+      amount: 15
+    - resource: {fileID: 11400000, guid: 871ce3e66b7884446bdccf7400486c80, type: 2}
       amount: 5
   settlerCount: 2
   farmCost:

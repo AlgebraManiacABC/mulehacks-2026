@@ -13,6 +13,7 @@ public class SettlerGroup : MonoBehaviour
     public ResourceCollection resources;
     // The size of the settler group
     public int settlers;
+    public RouteMover mover;
 
     /**
      * @return -1 if the group starved, 1 if it reached its destination, 0 otherwise
@@ -33,26 +34,7 @@ public class SettlerGroup : MonoBehaviour
         if (settlers <= 0) return -1;
 
         turnsLeft--;
+        mover.Step();
         return turnsLeft <= 0 ? 1 : 0;
-    }
-
-    // Partway along the straight line, so the group never sits on top of a settlement
-    private Vector3 RoutePosition()
-    {
-        float progress = (float)(totalTurns - turnsLeft + 1) / (totalTurns + 1);
-        return Vector3.Lerp(origin.Surface, destination.Surface, progress);
-    }
-
-    public void SnapToRoute()
-    {
-        transform.position = RoutePosition();
-        Vector3 dir = destination.Surface - origin.Surface;
-        dir.y = 0f;
-        if (dir.sqrMagnitude > 0f) transform.rotation = Quaternion.LookRotation(dir);
-    }
-
-    private void Update()
-    {
-        transform.position = Vector3.Lerp(transform.position, RoutePosition(), 1f - Mathf.Exp(-4f * Time.deltaTime));
     }
 }

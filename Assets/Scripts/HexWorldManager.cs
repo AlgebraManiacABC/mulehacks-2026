@@ -158,7 +158,10 @@ public class HexWorldManager : MonoBehaviour
         float length = Vector3.Distance(a.Surface, b.Surface);
         road.localScale = new Vector3(0.5f + 0.7f * t, 0.12f, length);
         var block = new MaterialPropertyBlock();
-        block.SetColor("_BaseColor", Color.Lerp(new Color(0.55f, 0.4f, 0.25f), new Color(0.7f, 0.7f, 0.75f), t));
+        // Wooden tiers are brown, stone tiers gray
+        block.SetColor("_BaseColor", tier >= RoadTier.TIER_3
+            ? (tier == RoadTier.TIER_4 ? new Color(0.72f, 0.72f, 0.75f) : new Color(0.55f, 0.55f, 0.58f))
+            : (tier == RoadTier.TIER_2 ? new Color(0.6f, 0.43f, 0.25f) : new Color(0.45f, 0.32f, 0.2f)));
         road.GetComponent<Renderer>().SetPropertyBlock(block);
     }
 

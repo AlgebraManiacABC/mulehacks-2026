@@ -20,6 +20,8 @@ public class Settlement : MonoBehaviour
     public HexTile tile;
     // Models shown on the tile
     public GameObject model, farmModel, millModel;
+    // What each model currently shows, so unchanged ones aren't rebuilt
+    private int modelKey = -1, farmKey = -1, millKey = -1;
 
     public string DisplayName => (isCapital ? "Capital " : "Settlement ") + tile;
 
@@ -33,10 +35,12 @@ public class Settlement : MonoBehaviour
     public void RefreshModels()
     {
         var tm = TurnManager.Instance;
-        Replace(ref model, isCapital ? ModelFor(tm.capitolBuilding, tier) : ModelFor(tm.embarkBuilding, 0), HexTile.CenterSlot);
-        Replace(ref farmModel, hasFarm ? ModelFor(tm.farmBuilding, 0) : null, HexTile.FarmSlot);
-        Replace(ref millModel, millTier > 0 ? ModelFor(tm.millBuilding, millTier - 1) : null, HexTile.MillSlot);
-        if (millModel != null) millModel.transform.localScale *= 1f + 0.15f * (millTier - 1);
+        Replace(ref model, ref modelKey, isCapital ? tier : 0,
+            isCapital ? ModelFor(tm.capitolBuilding, tier) : ModelFor(tm.embarkBuilding, 0), HexTile.CenterSlot);
+        Replace(ref farmModel, ref farmKey, hasFarm ? 1 : 0, hasFarm ? ModelFor(tm.farmBuilding, 0) : null, HexTile.FarmSlot);
+        bool newMill = Replace(ref millModel, ref millKey, millTier,
+            millTier > 0 ? ModelFor(tm.millBuilding, millTier - 1) : null, HexTile.MillSlot);
+        if (newMill && millModel != null) millModel.transform.localScale *= 1f + 0.15f * (millTier - 1);
     }
 
     private static GameObject ModelFor(Building building, int index)
@@ -45,10 +49,18 @@ public class Settlement : MonoBehaviour
         return building.tierModels[Mathf.Clamp(index, 0, building.tierModels.Length - 1)];
     }
 
-    private void Replace(ref GameObject current, GameObject prefab, Vector3 slot)
+    private bool Replace(ref GameObject current, ref int currentKey, int key, GameObject prefab, Vector3 slot)
     {
-        if (current != null) Destroy(current);
-        current = tile.Place(prefab, slot);
+        if (currentKey == key) return false;
+        currentKey = key;
+        if (current != null)
+        {
+            var anim = current.GetComponent<BuildAnimation>();
+            if (anim != null) anim.Sink();
+            else Destroy(current);
+        }
+        current = tile.Place(prefab, slot, true);
+        return true;
     }
 
     private void OnDestroy()
