@@ -62,8 +62,17 @@ public class HexWorldManager : MonoBehaviour
                     hexRenderer.material = curHex.biome.material;
                 }
                 curHex.surfaceY = hexRenderer.bounds.max.y;
-                var meshCollider = hexRenderer.gameObject.AddComponent<MeshCollider>();
-                meshCollider.sharedMesh = hexRenderer.GetComponent<MeshFilter>().sharedMesh;
+                // Builds can't cook a MeshCollider from a mesh without Read/Write enabled
+                var hexMesh = hexRenderer.GetComponent<MeshFilter>().sharedMesh;
+                if (hexMesh.isReadable)
+                    hexRenderer.gameObject.AddComponent<MeshCollider>().sharedMesh = hexMesh;
+                else
+                {
+                    // A box kept inside the hex's edges so it never overlaps a neighbor
+                    var box = curHexObj.AddComponent<BoxCollider>();
+                    box.center = hexRenderer.bounds.center - curHexObj.transform.position;
+                    box.size = new Vector3(8.5f, hexRenderer.bounds.size.y, 8.5f);
+                }
                 curHex.resource = curHex.biome.rollResource();
                 if (curHex.resource != null)
                 {
