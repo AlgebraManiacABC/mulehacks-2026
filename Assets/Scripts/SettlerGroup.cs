@@ -7,6 +7,7 @@ public class SettlerGroup : MonoBehaviour
 {
     public HexTile origin;
     public HexTile destination;
+    public Path route;
     public int turnsLeft;
     public int totalTurns;
     // The current resources of the group
@@ -20,17 +21,18 @@ public class SettlerGroup : MonoBehaviour
      */
     public int AdvanceTurn()
     {
-        int hungry = settlers;
+        // On the road, each food feeds two settlers
+        int needed = (settlers + 1) / 2, eaten = 0;
         foreach (var pile in resources.resources)
         {
-            if (hungry == 0) break;
+            if (eaten == needed) break;
             if (!pile.resource.isFood) continue;
-            int eaten = Mathf.Min(pile.amount, hungry);
-            pile.amount -= eaten;
-            hungry -= eaten;
+            int bite = Mathf.Min(pile.amount, needed - eaten);
+            pile.amount -= bite;
+            eaten += bite;
         }
         resources.resources.RemoveAll(p => p.amount <= 0);
-        settlers -= hungry;
+        settlers = Mathf.Min(settlers, eaten * 2);
         if (settlers <= 0) return -1;
 
         turnsLeft--;

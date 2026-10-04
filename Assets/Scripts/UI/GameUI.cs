@@ -22,6 +22,8 @@ public class GameUI : MonoBehaviour
     private readonly Dictionary<ResourceData, int> cargo = new();
     private readonly List<Rect> uiRects = new();
     private Vector2 panelScroll, projectScroll;
+    private string toast;
+    private float toastUntil;
     // Game actions clicked in OnGUI run on the next Update so the GUI layout stays consistent
     private System.Action queued;
 
@@ -41,6 +43,8 @@ public class GameUI : MonoBehaviour
         if (keyboard != null)
         {
             if (keyboard.enterKey.wasPressedThisFrame) tm.AdvanceTurn();
+            if (keyboard.f5Key.wasPressedThisFrame) SaveGame();
+            if (keyboard.f9Key.wasPressedThisFrame) LoadGame();
             if (keyboard.escapeKey.wasPressedThisFrame)
             {
                 if (pending != Pending.NONE) pending = Pending.NONE;
@@ -76,6 +80,39 @@ public class GameUI : MonoBehaviour
         }
     }
 
+    private void SaveGame()
+    {
+        if (tm.state != GameState.PLAYING) return;
+        try
+        {
+            SaveSystem.Write(tm.Capture());
+            Toast("Game saved");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError(e);
+            Toast("Save failed: " + e.Message);
+        }
+    }
+
+    private void LoadGame()
+    {
+        var data = SaveSystem.Read();
+        if (data == null)
+        {
+            Toast("No saved game");
+            return;
+        }
+        SaveSystem.PendingLoad = data;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    private void Toast(string message)
+    {
+        toast = message;
+        toastUntil = Time.time + 2.5f;
+    }
+
     private void Select(HexTile tile)
     {
         selected = tile;
@@ -96,7 +133,7 @@ public class GameUI : MonoBehaviour
         scale = Mathf.Max(1f, Screen.height / ReferenceHeight);
         GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
         GUI.skin.label.wordWrap = true;
-        GUI.skin.label.richText = true;
+        GUI.skin.label.richText = GUI.skin.box.richText = true;
         GUI.skin.label.fontSize = GUI.skin.button.fontSize = GUI.skin.box.fontSize = FontSize;
 
         if (tm.state != GameState.PLAYING)
@@ -108,6 +145,8 @@ public class GameUI : MonoBehaviour
         DrawTopBar();
         DrawProjects();
         if (selected != null) DrawTilePanel();
+        if (toast != null && Time.time < toastUntil)
+            GUI.Label(new Rect(W / 2f - 150, 64, 300, 40), "<b>" + toast + "</b>", GUI.skin.box);
     }
 
     private Rect Area(Rect rect)
@@ -127,6 +166,11 @@ public class GameUI : MonoBehaviour
                         + "    Capital pop " + capital.population
                         + "    Settlements " + tm.settlements.Count
                         + "    Settler groups " + tm.activeSettlers.Count);
+        if (GUILayout.Button("Save (F5)", GUILayout.Width(110), GUILayout.Height(34))) queued = SaveGame;
+        bool canLoad = SaveSystem.HasSave;
+        GUI.enabled = canLoad;
+        if (GUILayout.Button("Load (F9)", GUILayout.Width(110), GUILayout.Height(34))) queued = LoadGame;
+        GUI.enabled = true;
         if (GUILayout.Button("Next Turn (Enter)", GUILayout.Width(200), GUILayout.Height(34))) queued = tm.AdvanceTurn;
         GUILayout.EndHorizontal();
         GUILayout.EndArea();
@@ -353,6 +397,7 @@ public class GameUI : MonoBehaviour
             : "<b>Defeat.</b>\nYour capital was lost on turn " + tm.currentTurn + ".");
         GUILayout.FlexibleSpace();
         if (GUILayout.Button("Play again")) SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        if (SaveSystem.HasSave && GUILayout.Button("Load last save")) LoadGame();
         if (GUILayout.Button("Main menu")) SceneManager.LoadScene("MainMenu");
         GUILayout.EndArea();
     }

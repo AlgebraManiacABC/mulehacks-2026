@@ -7,6 +7,8 @@ using UnityEngine;
 public class RouteMover : MonoBehaviour
 {
     public List<Vector3> points;
+    // Cumulative share of the route's travel cost at each point, so walkers hurry along roads
+    public List<float> progressAt;
     public int totalTurns;
     public int turnsElapsed;
 
@@ -25,6 +27,16 @@ public class RouteMover : MonoBehaviour
         var mover = obj.AddComponent<RouteMover>();
         mover.points = new List<Vector3>();
         foreach (var node in route.nodes) mover.points.Add(node.Surface);
+        var costs = route.StepCosts();
+        float total = 0f;
+        foreach (float c in costs) total += c;
+        mover.progressAt = new List<float> { 0f };
+        float sum = 0f;
+        foreach (float c in costs)
+        {
+            sum += c;
+            mover.progressAt.Add(total > 0f ? sum / total : 1f);
+        }
         mover.totalTurns = Mathf.Max(1, turns);
         obj.transform.position = mover.points[0];
         return mover;
@@ -42,6 +54,14 @@ public class RouteMover : MonoBehaviour
     }
 
     public void Step() => turnsElapsed++;
+
+    // Jump straight to a point partway along the route (used when loading)
+    public void SetElapsed(int elapsed)
+    {
+        turnsElapsed = elapsed;
+        shown = Target;
+        transform.position = Evaluate(shown, out _);
+    }
 
     public void Arrive()
     {
@@ -74,10 +94,12 @@ public class RouteMover : MonoBehaviour
     {
         dir = Vector3.zero;
         if (points.Count < 2) return points[0];
-        float segments = points.Count - 1;
-        float f = Mathf.Clamp01(t) * segments;
-        int i = Mathf.Min((int)f, points.Count - 2);
+        t = Mathf.Clamp01(t);
+        int i = 0;
+        while (i < points.Count - 2 && progressAt[i + 1] < t) i++;
+        float span = progressAt[i + 1] - progressAt[i];
+        float f = span > 0f ? (t - progressAt[i]) / span : 1f;
         dir = points[i + 1] - points[i];
-        return Vector3.Lerp(points[i], points[i + 1], f - i);
+        return Vector3.Lerp(points[i], points[i + 1], f);
     }
 }

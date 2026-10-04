@@ -1,5 +1,6 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <ui:Button text="Start" name="buttonStart" style="height: 5%; width: 40%; left: 30%; top: 50%; font-size: 35%;"/>
-    <ui:Button text="Quit" name="buttonQuit" style="top: 55%; left: 30%; width: 40%; height: 5%; font-size: 35%;"/>
+    <ui:Button text="Load Game" name="buttonLoad" style="top: 53%; left: 30%; width: 40%; height: 5%; font-size: 35%;"/>
+    <ui:Button text="Quit" name="buttonQuit" style="top: 56%; left: 30%; width: 40%; height: 5%; font-size: 35%;"/>
     <ui:Label text="Connection Kingdom" style="-unity-text-align: middle-center; top: 35px; font-size: 100%; -unity-font-style: bold; -unity-font-definition: url(&quot;project://database/Assets/UI%20Toolkit/UnityThemes/UnityDefaultRuntimeTheme.tss?fileID=2230732570650464555&amp;guid=b6c3ae3682fb83c489c4b75285bedb8d&amp;type=3#NotInter-Regular&quot;);"/>
 </ui:UXML>

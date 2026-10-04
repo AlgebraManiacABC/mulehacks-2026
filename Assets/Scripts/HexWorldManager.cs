@@ -34,53 +34,35 @@ public class HexWorldManager : MonoBehaviour
     private GameObject highlight;
     private const float HexRadius = 5f / 0.8660254f; // corner radius for an edge radius of 5
 
+    public int Seed { get; private set; }
+
     private void Awake()
     {
         if (Instance != null) return;
         Instance = this;
-        var generator = new WorldGenerator(worldGen, latitude, longitude);
-        generator.Generate(biomes);
-        Random.InitState(generator.seed);
-        Debug.Log("World seed " + generator.seed);
 
-        // Load prefab hex for each position
-        tiles = new HexTile[latitude, longitude];
-        for (int x = 0; x < latitude; x++)
+        var save = SaveSystem.PendingLoad;
+        if (save != null)
         {
-            for (int z = 0; z < longitude; z++)
-            {
-                Vector3 position = HexToWorld(x, z, 5f) + Vector3.up * generator.Height(x, z);
-                GameObject curHexObj = Instantiate(hexPrefab, position, Quaternion.identity);
-                curHexObj.name = "Hex(" + x + ", " + z + ")";
-                HexTile curHex = curHexObj.GetComponent<HexTile>();
-                curHex.x = x;
-                curHex.z = z;
-                curHex.biome = generator.biomes[x, z];
-                MeshRenderer hexRenderer = curHex.GetComponentInChildren<MeshRenderer>();
-                if (curHex.biome.material != null)
-                {
-                    hexRenderer.material = curHex.biome.material;
-                }
-                curHex.surfaceY = hexRenderer.bounds.max.y;
-                // Builds can't cook a MeshCollider from a mesh without Read/Write enabled
-                var hexMesh = hexRenderer.GetComponent<MeshFilter>().sharedMesh;
-                if (hexMesh.isReadable)
-                    hexRenderer.gameObject.AddComponent<MeshCollider>().sharedMesh = hexMesh;
-                else
-                {
-                    // A box kept inside the hex's edges so it never overlaps a neighbor
-                    var box = curHexObj.AddComponent<BoxCollider>();
-                    box.center = hexRenderer.bounds.center - curHexObj.transform.position;
-                    box.size = new Vector3(8.5f, hexRenderer.bounds.size.y, 8.5f);
-                }
-                curHex.resource = curHex.biome.rollResource();
-                if (curHex.resource != null)
-                {
-                    curHex.Place(curHex.resource.display, HexTile.ResourceSlot);
-                }
-                tiles[x, z] = curHex;
-            }
+            latitude = save.latitude;
+            longitude = save.longitude;
+            tiles = new HexTile[latitude, longitude];
+            Seed = save.seed;
+            foreach (var t in save.tiles)
+                CreateTile(t.x, t.z, biomes.Find(b => b.name == t.biome), SaveSystem.FindResource(t.resource), t.height);
         }
+        else
+        {
+            tiles = new HexTile[latitude, longitude];
+            var generator = new WorldGenerator(worldGen, latitude, longitude);
+            generator.Generate(biomes);
+            Random.InitState(generator.seed);
+            Seed = generator.seed;
+            for (int x = 0; x < latitude; x++)
+                for (int z = 0; z < longitude; z++)
+                    CreateTile(x, z, generator.biomes[x, z], generator.biomes[x, z].rollResource(), generator.Height(x, z));
+        }
+        Debug.Log("World seed " + Seed);
 
         foreach (var tile in tiles)
         {
@@ -95,7 +77,41 @@ public class HexWorldManager : MonoBehaviour
             }
         }
     }
-    
+
+    private void CreateTile(int x, int z, BiomeData biome, ResourceData resource, float height)
+    {
+        Vector3 position = HexToWorld(x, z, 5f) + Vector3.up * height;
+        GameObject curHexObj = Instantiate(hexPrefab, position, Quaternion.identity);
+        curHexObj.name = "Hex(" + x + ", " + z + ")";
+        HexTile curHex = curHexObj.GetComponent<HexTile>();
+        curHex.x = x;
+        curHex.z = z;
+        curHex.biome = biome;
+        MeshRenderer hexRenderer = curHex.GetComponentInChildren<MeshRenderer>();
+        if (biome.material != null)
+        {
+            hexRenderer.material = biome.material;
+        }
+        curHex.surfaceY = hexRenderer.bounds.max.y;
+        // Builds can't cook a MeshCollider from a mesh without Read/Write enabled
+        var hexMesh = hexRenderer.GetComponent<MeshFilter>().sharedMesh;
+        if (hexMesh.isReadable)
+            hexRenderer.gameObject.AddComponent<MeshCollider>().sharedMesh = hexMesh;
+        else
+        {
+            // A box kept inside the hex's edges so it never overlaps a neighbor
+            var box = curHexObj.AddComponent<BoxCollider>();
+            box.center = hexRenderer.bounds.center - curHexObj.transform.position;
+            box.size = new Vector3(8.5f, hexRenderer.bounds.size.y, 8.5f);
+        }
+        curHex.resource = resource;
+        if (resource != null)
+        {
+            curHex.Place(resource.display, HexTile.ResourceSlot);
+        }
+        tiles[x, z] = curHex;
+    }
+
     private static Vector3 HexToWorld(int col, int row, float a)
     {
         float x = col * Mathf.Sqrt(3f) * a;
@@ -114,17 +130,23 @@ public class HexWorldManager : MonoBehaviour
         return (Mathf.Abs(dq) + Mathf.Abs(dr) + Mathf.Abs(dq + dr)) / 2;
     }
 
-    // Shortest path (each step costs 1) between two tiles; null if unreachable.
-    // With roadsOnly, only existing roads may be travelled.
-    public Path FindPath(HexTile start, HexTile goal, bool roadsOnly = true)
+    // Cheapest path between two tiles (Dijkstra); null if unreachable
+    public Path FindPath(HexTile start, HexTile goal, PathMode mode = PathMode.ROADS_ONLY)
     {
-        var cameFrom = new Dictionary<HexTile, HexTile> { [start] = start };
-        var frontier = new Queue<HexTile>();
-        frontier.Enqueue(start);
+        var cost = new Dictionary<HexTile, float> { [start] = 0f };
+        var cameFrom = new Dictionary<HexTile, HexTile>();
+        var done = new HashSet<HexTile>();
+        var frontier = new List<HexTile> { start };
 
         while (frontier.Count > 0)
         {
-            var current = frontier.Dequeue();
+            int best = 0;
+            for (int i = 1; i < frontier.Count; i++)
+                if (cost[frontier[i]] < cost[frontier[best]]) best = i;
+            var current = frontier[best];
+            frontier.RemoveAt(best);
+            if (!done.Add(current)) continue;
+
             if (current == goal)
             {
                 var nodes = new List<HexTile>();
@@ -137,10 +159,18 @@ public class HexWorldManager : MonoBehaviour
             for (int i = 0; i < current.connections.Length; i++)
             {
                 var next = current.connections[i];
-                if (next == null || (roadsOnly && current.roads[i] == RoadTier.NO_ROAD)) continue;
-                if (cameFrom.ContainsKey(next)) continue;
+                if (next == null || done.Contains(next)) continue;
+                var road = current.roads[i];
+                if (mode == PathMode.ROADS_ONLY && road == RoadTier.NO_ROAD) continue;
+                float step = mode == PathMode.PLAN_ROAD
+                    ? (road == RoadTier.NO_ROAD ? 1f : 0.5f)
+                    // A hair extra off-road so equal-cost routes stick to roads
+                    : Path.StepCost(road) + (road == RoadTier.NO_ROAD ? 0.001f : 0f);
+                float total = cost[current] + step;
+                if (cost.TryGetValue(next, out float known) && known <= total) continue;
+                cost[next] = total;
                 cameFrom[next] = current;
-                frontier.Enqueue(next);
+                frontier.Add(next);
             }
         }
         return null;
