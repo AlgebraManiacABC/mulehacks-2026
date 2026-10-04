@@ -1,4 +1,3 @@
-using Unity.VisualScripting;
 using UnityEngine;
 
 /**
@@ -6,31 +5,36 @@ using UnityEngine;
  */
 public class SettlerGroup : MonoBehaviour
 {
-    // The path these settlers are following
-    public Path path;
-    // Where the Settlers are now, as an index into the Path
-    public int path_index;
+    public HexTile origin;
+    public HexTile destination;
+    public int turnsLeft;
+    public int totalTurns;
     // The current resources of the group
     public ResourceCollection resources;
     // The size of the settler group
     public int settlers;
 
+    /**
+     * @return -1 if the group starved, 1 if it reached its destination, 0 otherwise
+     */
     public int AdvanceTurn()
     {
-        // Decrement resources like a Settlement
-        // TODO: Implement (return -1 if lost)
-        // Move toward goal
-        path_index++;
-        if (path_index == path.nodes.Count - 1)
+        int hungry = settlers;
+        foreach (var pile in resources.resources)
         {
-            // Reached destination!
-            HexTile tile = path.nodes[path_index];
-            Settlement sment = tile.AddComponent<Settlement>();
-            sment.resources = resources;
-            sment.population = settlers;
-            sment.tile = tile;
-            return 1;
+            if (hungry == 0) break;
+            if (!pile.resource.isFood) continue;
+            int eaten = Mathf.Min(pile.amount, hungry);
+            pile.amount -= eaten;
+            hungry -= eaten;
         }
-        return 0;
+        resources.resources.RemoveAll(p => p.amount <= 0);
+        settlers -= hungry;
+        if (settlers <= 0) return -1;
+
+        turnsLeft--;
+        float progress = 1f - (float)turnsLeft / totalTurns;
+        transform.position = Vector3.Lerp(origin.Surface, destination.Surface, progress) + Vector3.up;
+        return turnsLeft <= 0 ? 1 : 0;
     }
 }

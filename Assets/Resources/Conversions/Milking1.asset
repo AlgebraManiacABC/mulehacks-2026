@@ -13,7 +13,11 @@ MonoBehaviour:
   m_Name: Milking1
   m_EditorClassIdentifier: Assembly-CSharp::ResourceConversion
   input:
-    resources: []
+    resources:
+    - resource: {fileID: 11400000, guid: 0250876f45f2d2b4ea8db89122cbf35d, type: 2}
+      amount: 1
   output:
-    resources: []
+    resources:
+    - resource: {fileID: 11400000, guid: 049913bceeda3c140813c69accfcd671, type: 2}
+      amount: 1
   expendResource: 0

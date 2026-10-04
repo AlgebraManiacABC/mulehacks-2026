@@ -74,4 +74,47 @@ public class ResourceCollection
         }
         return result;
     }
+
+    public int Amount(ResourceData resource)
+    {
+        foreach (var pile in resources)
+            if (pile.resource == resource) return pile.amount;
+        return 0;
+    }
+
+    public bool Has(ResourceCollection take) => this - take >= 0;
+
+    public void Add(ResourceData resource, int amount)
+    {
+        if (amount <= 0) return;
+        resources ??= new List<ResourcePile>();
+        foreach (var pile in resources)
+        {
+            if (pile.resource != resource) continue;
+            pile.amount += amount;
+            return;
+        }
+        resources.Add(new ResourcePile { resource = resource, amount = amount });
+    }
+
+    public void Add(ResourceCollection other)
+    {
+        foreach (var pile in other.resources) Add(pile.resource, pile.amount);
+    }
+
+    public ResourceCollection Clone(int multiplier = 1)
+    {
+        var copy = new ResourceCollection { resources = new List<ResourcePile>() };
+        if (resources == null) return copy;
+        foreach (var pile in resources) copy.Add(pile.resource, pile.amount * multiplier);
+        return copy;
+    }
+
+    public override string ToString()
+    {
+        if (resources == null || resources.Count == 0) return "nothing";
+        var parts = new List<string>();
+        foreach (var pile in resources) parts.Add(pile.amount + " " + pile.resource.resourceName);
+        return string.Join(", ", parts);
+    }
 }

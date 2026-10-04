@@ -13,7 +13,11 @@ MonoBehaviour:
   m_Name: FlourMilling1
   m_EditorClassIdentifier: Assembly-CSharp::ResourceConversion
   input:
-    resources: []
+    resources:
+    - resource: {fileID: 11400000, guid: 1dd0d2ba29f813141ac4717514eb9c3b, type: 2}
+      amount: 1
   output:
-    resources: []
+    resources:
+    - resource: {fileID: 11400000, guid: aeb916a6cd38b7f429d3520d9d4ffe9c, type: 2}
+      amount: 2
   expendResource: 1

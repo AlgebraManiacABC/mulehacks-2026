@@ -14,7 +14,49 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Building
   BuildingType: 0
   tierBuildTimes: 0000000001000000020000000300000004000000050000000600000007000000
-  tierBuildResources: []
+  tierBuildResources:
+  - resources: []
+  - resources: []
+  - resources:
+    - resource: {fileID: 11400000, guid: 7640492bb15bd1c4abdac36aa20a9ff0, type: 2}
+      amount: 15
+    - resource: {fileID: 11400000, guid: 871ce3e66b7884446bdccf7400486c80, type: 2}
+      amount: 10
+  - resources:
+    - resource: {fileID: 11400000, guid: 7640492bb15bd1c4abdac36aa20a9ff0, type: 2}
+      amount: 25
+    - resource: {fileID: 11400000, guid: 871ce3e66b7884446bdccf7400486c80, type: 2}
+      amount: 20
+  - resources:
+    - resource: {fileID: 11400000, guid: 7640492bb15bd1c4abdac36aa20a9ff0, type: 2}
+      amount: 40
+    - resource: {fileID: 11400000, guid: 871ce3e66b7884446bdccf7400486c80, type: 2}
+      amount: 30
+    - resource: {fileID: 11400000, guid: aeb916a6cd38b7f429d3520d9d4ffe9c, type: 2}
+      amount: 20
+  - resources:
+    - resource: {fileID: 11400000, guid: 7640492bb15bd1c4abdac36aa20a9ff0, type: 2}
+      amount: 55
+    - resource: {fileID: 11400000, guid: 871ce3e66b7884446bdccf7400486c80, type: 2}
+      amount: 45
+    - resource: {fileID: 11400000, guid: 6abd7445e6721df49955063d7edf93c8, type: 2}
+      amount: 20
+  - resources:
+    - resource: {fileID: 11400000, guid: 7640492bb15bd1c4abdac36aa20a9ff0, type: 2}
+      amount: 75
+    - resource: {fileID: 11400000, guid: 871ce3e66b7884446bdccf7400486c80, type: 2}
+      amount: 60
+    - resource: {fileID: 11400000, guid: 049913bceeda3c140813c69accfcd671, type: 2}
+      amount: 30
+  - resources:
+    - resource: {fileID: 11400000, guid: 7640492bb15bd1c4abdac36aa20a9ff0, type: 2}
+      amount: 100
+    - resource: {fileID: 11400000, guid: 871ce3e66b7884446bdccf7400486c80, type: 2}
+      amount: 80
+    - resource: {fileID: 11400000, guid: 6abd7445e6721df49955063d7edf93c8, type: 2}
+      amount: 40
+    - resource: {fileID: 11400000, guid: 049913bceeda3c140813c69accfcd671, type: 2}
+      amount: 40
   tierResourceGenerations: []
   tierResourceConversion: []
   tierModels: []

@@ -10,75 +10,72 @@ public class Settlement : MonoBehaviour
     public ResourceCollection resources;
     // The population of the settlement
     public int population;
-    // What building is currently being constructed
-    public List<Building> constructions = new List<Building>();
-    // A timer for building construction
-    public int turnTimer;
-    // The completed buildings on this tile
-    public List<Building> buildings = new List<Building>();
+    // Tier of the settlement (only the capital can be upgraded)
+    public int tier = 1;
+    // Whether a farm harvests this tile's primary resource
+    public bool hasFarm;
+    // Tier of this settlement's mill (0 = no mill)
+    public int millTier;
     // The tile this settlement exists on
     public HexTile tile;
-    
+    // The model shown on the tile
+    public GameObject model;
+
+    public string DisplayName => (isCapital ? "Capital " : "Settlement ") + tile;
+
     // Action to alert TurnManager of loss of settlement
     public event Action<Settlement> Lost;
-    
-    void SendSettlers(HexTile dest)
-    {
-        Path path = HexWorldManager.Instance.FindPath(tile, dest);
-        if (path == null)
-        {
-            // Something bad...
-            throw new InvalidOperationException("Attempted to form a path between two completely disconnected hexagons!");
-        }
-        SettlerGroup group = gameObject.AddComponent<SettlerGroup>();
-        group.path = path;
-        group.path_index = 0;
-        int resourcesLeft = resources.Remove(TurnManager.Instance.settlerResourceCost);
-        if (resourcesLeft < 0)
-        {
-            // Can't send settlers; surely we checked for this earlier?
-            throw new InvalidOperationException("Attempted to send settlers with insufficient resources!");
-        }
-        group.resources = TurnManager.Instance.settlerResourceCost;
-    }
 
-    void AdvanceTurn()
+    public bool CanHaveFarm => tile.resource != null && tile.resource.isPrimary;
+
+    public int MaxPopulation => 10 * tier;
+
+    public void AdvanceTurn(int farmYield, IList<ResourceConversion> millConversions, int millRunsPerTier)
     {
-        // Increment resources according to farms on this tile
-        // TODO: Add farms
+        if (hasFarm && CanHaveFarm)
+        {
+            resources.Add(tile.resource, farmYield);
+        }
+
+        if (millTier > 0)
+        {
+            foreach (var conversion in millConversions)
+            {
+                for (int run = 0; run < millTier * millRunsPerTier && resources.Has(conversion.input); run++)
+                {
+                    if (conversion.expendResource) resources.Remove(conversion.input);
+                    resources.Add(conversion.output);
+                }
+            }
+        }
+
         // Decrement food resources 1 per pop
         int hungry_population = population;
         foreach (ResourcePile pile in resources.resources)
         {
-            if (pile.resource.isFood)
-            {
-                if (pile.amount > hungry_population)
-                {
-                    pile.amount -= hungry_population;
-                    hungry_population = 0;
-                }
-                else
-                {
-                    hungry_population -= pile.amount;
-                    pile.amount = 0;
-                }
-            }
             if (hungry_population == 0) break;
+            if (!pile.resource.isFood) continue;
+            int eaten = Mathf.Min(pile.amount, hungry_population);
+            pile.amount -= eaten;
+            hungry_population -= eaten;
         }
+        resources.resources.RemoveAll(p => p.amount <= 0);
         // If still hungry, lose all hungry_population
         population -= hungry_population;
-        if (population == 0)
+        if (population <= 0)
         {
-            // Lose the settlement
+            population = 0;
             Lost?.Invoke(this);
             return;
         }
-        // If high enough resources, increase population
-        // TODO: Grow population
-        // Decrement build timers
-        if (turnTimer > 0)
+
+        // Grow if there is at least a turn's worth of food left over
+        int food = 0;
+        foreach (var pile in resources.resources)
+            if (pile.resource.isFood) food += pile.amount;
+        if (hungry_population == 0 && food >= population && population < MaxPopulation)
         {
-            turnTimer--;
+            population++;
         }
     }
 }

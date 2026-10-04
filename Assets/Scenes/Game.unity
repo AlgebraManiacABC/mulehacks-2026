@@ -182,11 +182,43 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 023982b693583c644bc65a88983cb983, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TurnManager
-  embarkResources: []
+  embarkResources:
+  - resource: {fileID: 11400000, guid: aeb916a6cd38b7f429d3520d9d4ffe9c, type: 2}
+    amount: 60
+  - resource: {fileID: 11400000, guid: 7640492bb15bd1c4abdac36aa20a9ff0, type: 2}
+    amount: 40
+  - resource: {fileID: 11400000, guid: 871ce3e66b7884446bdccf7400486c80, type: 2}
+    amount: 20
+  - resource: {fileID: 11400000, guid: fc5f83803f15d7142bd09e672be3da80, type: 2}
+    amount: 10
   embarkBuilding: {fileID: 11400000, guid: a2c0a2b698a92a04fa10f62012c558d2, type: 2}
+  capitolBuilding: {fileID: 11400000, guid: 92de390c41af1854eb49fc866f920b58, type: 2}
   hexWorldManager: {fileID: 1209295969}
   settlerResourceCost:
-    resources: []
+    resources:
+    - resource: {fileID: 11400000, guid: aeb916a6cd38b7f429d3520d9d4ffe9c, type: 2}
+      amount: 10
+    - resource: {fileID: 11400000, guid: 7640492bb15bd1c4abdac36aa20a9ff0, type: 2}
+      amount: 5
+  settlerCount: 2
+  farmCost:
+    resources:
+    - resource: {fileID: 11400000, guid: 7640492bb15bd1c4abdac36aa20a9ff0, type: 2}
+      amount: 5
+  farmYield: 6
+  millCostPerTier:
+    resources:
+    - resource: {fileID: 11400000, guid: 7640492bb15bd1c4abdac36aa20a9ff0, type: 2}
+      amount: 10
+    - resource: {fileID: 11400000, guid: 871ce3e66b7884446bdccf7400486c80, type: 2}
+      amount: 5
+  maxMillTier: 4
+  millRunsPerTier: 3
+  millConversions:
+  - {fileID: 11400000, guid: e8160bbcb140efc4b90c1b541bad96cc, type: 2}
+  - {fileID: 11400000, guid: b1cf190e30f30ea4aa35974c83cbfc37, type: 2}
+  - {fileID: 11400000, guid: 4580248ca2ca49f40831f5c50994ce6b, type: 2}
+  winTier: 7
   activeSettlers: []
   currentTurn: 0
 --- !u!1 &1288573222

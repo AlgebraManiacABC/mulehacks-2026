@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ResourceData
   resourceName: Wood
   isPrimary: 1
-  roadResourceType: 0
+  roadResourceType: 3
   isArchitectural: 1
   isFood: 0
   isLuxury: 0
