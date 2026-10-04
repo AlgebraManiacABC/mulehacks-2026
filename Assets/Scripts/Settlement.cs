@@ -18,8 +18,8 @@ public class Settlement : MonoBehaviour
     public int millTier;
     // The tile this settlement exists on
     public HexTile tile;
-    // The model shown on the tile
-    public GameObject model;
+    // Models shown on the tile
+    public GameObject model, farmModel, millModel;
 
     public string DisplayName => (isCapital ? "Capital " : "Settlement ") + tile;
 
@@ -29,6 +29,34 @@ public class Settlement : MonoBehaviour
     public bool CanHaveFarm => tile.resource != null && tile.resource.isPrimary;
 
     public int MaxPopulation => 10 * tier;
+
+    public void RefreshModels()
+    {
+        var tm = TurnManager.Instance;
+        Replace(ref model, isCapital ? ModelFor(tm.capitolBuilding, tier) : ModelFor(tm.embarkBuilding, 0), HexTile.CenterSlot);
+        Replace(ref farmModel, hasFarm ? ModelFor(tm.farmBuilding, 0) : null, HexTile.FarmSlot);
+        Replace(ref millModel, millTier > 0 ? ModelFor(tm.millBuilding, millTier - 1) : null, HexTile.MillSlot);
+        if (millModel != null) millModel.transform.localScale *= 1f + 0.15f * (millTier - 1);
+    }
+
+    private static GameObject ModelFor(Building building, int index)
+    {
+        if (building == null || building.tierModels.Length == 0) return null;
+        return building.tierModels[Mathf.Clamp(index, 0, building.tierModels.Length - 1)];
+    }
+
+    private void Replace(ref GameObject current, GameObject prefab, Vector3 slot)
+    {
+        if (current != null) Destroy(current);
+        current = tile.Place(prefab, slot);
+    }
+
+    private void OnDestroy()
+    {
+        if (model != null) Destroy(model);
+        if (farmModel != null) Destroy(farmModel);
+        if (millModel != null) Destroy(millModel);
+    }
 
     public void AdvanceTurn(int farmYield, IList<ResourceConversion> millConversions, int millRunsPerTier)
     {

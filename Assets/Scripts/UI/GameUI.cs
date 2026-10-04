@@ -7,11 +7,10 @@ public class GameUI : MonoBehaviour
 {
     private enum Pending { NONE, SETTLER_SOURCE, ROAD_TARGET, SHIP_TARGET, SHIP_AMOUNTS }
 
-    private static readonly int BaseColor = Shader.PropertyToID("_BaseColor");
+    private const int FontSize = 16;
 
     private TurnManager tm;
     private HexTile selected;
-    private Renderer selectedRenderer;
     private Pending pending;
     private Settlement shipTo;
     private readonly Dictionary<ResourceData, int> cargo = new();
@@ -73,15 +72,9 @@ public class GameUI : MonoBehaviour
 
     private void Select(HexTile tile)
     {
-        if (selectedRenderer != null) selectedRenderer.SetPropertyBlock(null);
         selected = tile;
-        selectedRenderer = null;
         pending = Pending.NONE;
-        if (tile == null) return;
-        selectedRenderer = tile.hexRenderer;
-        var block = new MaterialPropertyBlock();
-        block.SetColor(BaseColor, new Color(1f, 0.85f, 0.4f));
-        selectedRenderer.SetPropertyBlock(block);
+        HexWorldManager.Instance.Highlight(tile);
     }
 
     private void BeginShipment(Settlement to)
@@ -96,6 +89,7 @@ public class GameUI : MonoBehaviour
         if (Event.current.type == EventType.Layout) uiRects.Clear();
         GUI.skin.label.wordWrap = true;
         GUI.skin.label.richText = true;
+        GUI.skin.label.fontSize = GUI.skin.button.fontSize = GUI.skin.box.fontSize = FontSize;
 
         if (tm.state != GameState.PLAYING)
         {
@@ -117,7 +111,7 @@ public class GameUI : MonoBehaviour
 
     private void DrawTopBar()
     {
-        Area(new Rect(10, 10, Screen.width - 20, 36));
+        Area(new Rect(10, 10, Screen.width - 20, 44));
         GUILayout.BeginHorizontal();
         var capital = tm.capital;
         GUILayout.Label("Turn " + tm.currentTurn
@@ -125,14 +119,14 @@ public class GameUI : MonoBehaviour
                         + "    Capital pop " + capital.population
                         + "    Settlements " + tm.settlements.Count
                         + "    Settler groups " + tm.activeSettlers.Count);
-        if (GUILayout.Button("Next Turn (Enter)", GUILayout.Width(160), GUILayout.Height(26))) queued = tm.AdvanceTurn;
+        if (GUILayout.Button("Next Turn (Enter)", GUILayout.Width(190), GUILayout.Height(32))) queued = tm.AdvanceTurn;
         GUILayout.EndHorizontal();
         GUILayout.EndArea();
     }
 
     private void DrawProjects()
     {
-        Area(new Rect(Screen.width - 300, 56, 290, 260));
+        Area(new Rect(Screen.width - 350, 64, 340, 300));
         GUILayout.Label("<b>In progress</b>");
         projectScroll = GUILayout.BeginScrollView(projectScroll);
         foreach (var p in tm.projects)
@@ -146,7 +140,7 @@ public class GameUI : MonoBehaviour
 
     private void DrawTilePanel()
     {
-        Area(new Rect(10, 56, 360, Screen.height - 66));
+        Area(new Rect(10, 64, 420, Screen.height - 74));
         panelScroll = GUILayout.BeginScrollView(panelScroll);
 
         string resource = selected.resource != null
@@ -269,11 +263,11 @@ public class GameUI : MonoBehaviour
         {
             cargo.TryGetValue(pile.resource, out int amount);
             GUILayout.BeginHorizontal();
-            GUILayout.Label(pile.resource.resourceName + " (" + pile.amount + ")", GUILayout.Width(130));
-            if (GUILayout.Button("-5", GUILayout.Width(32))) amount -= 5;
-            GUILayout.Label(amount.ToString(), GUILayout.Width(36));
-            if (GUILayout.Button("+5", GUILayout.Width(32))) amount += 5;
-            if (GUILayout.Button("All", GUILayout.Width(40))) amount = pile.amount;
+            GUILayout.Label(pile.resource.resourceName + " (" + pile.amount + ")", GUILayout.Width(150));
+            if (GUILayout.Button("-5", GUILayout.Width(40))) amount -= 5;
+            GUILayout.Label(amount.ToString(), GUILayout.Width(44));
+            if (GUILayout.Button("+5", GUILayout.Width(40))) amount += 5;
+            if (GUILayout.Button("All", GUILayout.Width(50))) amount = pile.amount;
             GUILayout.EndHorizontal();
             amount = Mathf.Clamp(amount, 0, pile.amount);
             cargo[pile.resource] = amount;
@@ -302,7 +296,7 @@ public class GameUI : MonoBehaviour
 
     private void DrawEndScreen()
     {
-        var rect = new Rect(Screen.width / 2f - 180, Screen.height / 2f - 80, 360, 160);
+        var rect = new Rect(Screen.width / 2f - 210, Screen.height / 2f - 100, 420, 200);
         GUILayout.BeginArea(rect, GUI.skin.box);
         GUILayout.Label(tm.state == GameState.WON
             ? "<b>Victory!</b>\nYour capital reached tier " + tm.winTier + " on turn " + tm.currentTurn + "."

@@ -152,6 +152,8 @@ MonoBehaviour:
   hexPrefab: {fileID: 694778575029199600, guid: 0ea1c21f132176341a3dd80715494a36, type: 3}
   latitude: 10
   longitude: 10
+  highlightMaterial: {fileID: 2100000, guid: 7d20e94b432a25a7a745e15b5313c3d7, type: 2}
+  roadMaterial: {fileID: 2100000, guid: 32d0f1a2e48df945743f4cb49bfac552, type: 2}
   biomes:
   - {fileID: 11400000, guid: a9a8fbb3023ce2b44bdc18c90ebde008, type: 2}
   - {fileID: 11400000, guid: 220bcfca9f7598e43bd015b4dc65f847, type: 2}
@@ -193,6 +195,9 @@ MonoBehaviour:
     amount: 10
   embarkBuilding: {fileID: 11400000, guid: a2c0a2b698a92a04fa10f62012c558d2, type: 2}
   capitolBuilding: {fileID: 11400000, guid: 92de390c41af1854eb49fc866f920b58, type: 2}
+  farmBuilding: {fileID: 11400000, guid: a6b2964911b53a14e8c90dd788f780c1, type: 2}
+  millBuilding: {fileID: 11400000, guid: 08da974088d7308daf02ff0cac1d3abc, type: 2}
+  settlerPrefab: {fileID: 7551007321611843285, guid: 54b03f24c424c09ac01e9458385d01c9, type: 3}
   hexWorldManager: {fileID: 1209295969}
   settlerResourceCost:
     resources:

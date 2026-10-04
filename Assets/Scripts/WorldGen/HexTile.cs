@@ -18,7 +18,20 @@ public class HexTile : MonoBehaviour
     public int x, z;
     // World-space height of the tile's top face
     public float surfaceY;
-    public Renderer hexRenderer;
+
+    // Model positions, pointing at corners so they stay clear of roads
+    public static readonly Vector3 CenterSlot = Vector3.zero;
+    public static readonly Vector3 ResourceSlot = new Vector3(3.4f, 0f, 0f);
+    public static readonly Vector3 FarmSlot = new Vector3(-1.7f, 0f, 2.95f);
+    public static readonly Vector3 MillSlot = new Vector3(-1.7f, 0f, -2.95f);
+
+    public GameObject Place(GameObject prefab, Vector3 slot)
+    {
+        if (prefab == null) return null;
+        var obj = Instantiate(prefab, transform);
+        obj.transform.localPosition = new Vector3(slot.x, surfaceY - transform.position.y, slot.z);
+        return obj;
+    }
 
     public Vector3 Surface => new Vector3(transform.position.x, surfaceY, transform.position.z);
 

@@ -59,4 +59,12 @@ MonoBehaviour:
       amount: 40
   tierResourceGenerations: []
   tierResourceConversion: []
-  tierModels: []
+  tierModels:
+  - {fileID: 4830456613208882424, guid: fb429e5d9bdcde65ee72d4f06e85a58a, type: 3}
+  - {fileID: 4830456613208882424, guid: fb429e5d9bdcde65ee72d4f06e85a58a, type: 3}
+  - {fileID: 1249293810156715212, guid: 8338435c05cc4e4e509bbbbaf27a38bf, type: 3}
+  - {fileID: 3485203738771694003, guid: 11c78e74090543147c7320f7082dccbb, type: 3}
+  - {fileID: 774552559201213462, guid: 08b389b0347128165495ad215b4fe51a, type: 3}
+  - {fileID: 5699050192358357239, guid: 17e0a862f2e00feffabf64720a7fc4fa, type: 3}
+  - {fileID: 1679111805600693418, guid: 98494a2506d307c3af010be9c6dbd91c, type: 3}
+  - {fileID: 5073744003224436616, guid: 097f7f6ac9000b748e1d23b7647bde0e, type: 3}

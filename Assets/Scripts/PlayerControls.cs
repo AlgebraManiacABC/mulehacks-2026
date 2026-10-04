@@ -11,6 +11,8 @@ public class PlayerControls : MonoBehaviour
     [SerializeField] float panSpeed = 40f;          // units per second
     [SerializeField] float lookSensitivity = 0.15f; // degrees per pixel
     [SerializeField] float minPitch = -89f, maxPitch = 89f;
+    [SerializeField] float focusDistance = 35f;
+    [SerializeField] float minFocusPitch = 35f;
     
     float smoothYaw, smoothPitch;   // current (displayed) angles
     Vector3 targetPosition;
@@ -19,14 +21,26 @@ public class PlayerControls : MonoBehaviour
     [SerializeField] float lookSmoothing = 15f;
     [SerializeField] float panSmoothing = 10f;
     
-    void Start()
+    void Awake()
     {
         gameObject.transform.position = new Vector3(0, initialY, 0);
         move = InputSystem.actions.FindAction("Move");
         Vector3 e = transform.eulerAngles;
-        yaw = e.y;
-        pitch = e.x > 180f ? e.x - 360f : e.x;   // convert 0–360 to -180–180
+        yaw = smoothYaw = e.y;
+        pitch = smoothPitch = e.x > 180f ? e.x - 360f : e.x;   // convert 0–360 to -180–180
         targetPosition = transform.position;
+    }
+
+    // Move so the camera looks at point; snap skips the smoothing
+    public void FocusOn(Vector3 point, bool snap)
+    {
+        pitch = Mathf.Max(pitch, minFocusPitch);
+        targetPosition = point - Quaternion.Euler(pitch, yaw, 0f) * Vector3.forward * focusDistance;
+        if (!snap) return;
+        smoothYaw = yaw;
+        smoothPitch = pitch;
+        transform.rotation = Quaternion.Euler(pitch, yaw, 0f);
+        transform.position = targetPosition;
     }
 
     void Update()

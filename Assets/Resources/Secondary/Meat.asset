@@ -18,3 +18,4 @@ MonoBehaviour:
   isArchitectural: 0
   isFood: 1
   isLuxury: 0
+  display: {fileID: 118769994586661419, guid: 7f6f892412572055765883030be13f07, type: 3}

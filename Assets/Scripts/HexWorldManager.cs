@@ -20,6 +20,8 @@ public class HexWorldManager : MonoBehaviour
 
     [SerializeField]
     public List<BiomeData> biomes;
+    public Material highlightMaterial;
+    public Material roadMaterial;
 
     // Neighbor offsets (dx, dz) for even and odd columns; odd columns are shifted +z
     private static readonly Vector2Int[] EvenColNeighbors =
@@ -27,8 +29,9 @@ public class HexWorldManager : MonoBehaviour
     private static readonly Vector2Int[] OddColNeighbors =
         { new(0, 1), new(1, 1), new(1, 0), new(0, -1), new(-1, 0), new(-1, 1) };
 
-    private readonly Dictionary<(int, int), LineRenderer> roadLines = new();
-    private Material roadMaterial;
+    private readonly Dictionary<(int, int), Transform> roadSegments = new();
+    private GameObject highlight;
+    private const float HexRadius = 5f / 0.8660254f; // corner radius for an edge radius of 5
 
     private void Awake()
     {
@@ -50,7 +53,6 @@ public class HexWorldManager : MonoBehaviour
                 curHex.z = z;
                 curHex.biome = RandomBiome();
                 MeshRenderer hexRenderer = curHex.GetComponentInChildren<MeshRenderer>();
-                curHex.hexRenderer = hexRenderer;
                 if (curHex.biome.material != null)
                 {
                     hexRenderer.material = curHex.biome.material;
@@ -59,9 +61,9 @@ public class HexWorldManager : MonoBehaviour
                 var meshCollider = hexRenderer.gameObject.AddComponent<MeshCollider>();
                 meshCollider.sharedMesh = hexRenderer.GetComponent<MeshFilter>().sharedMesh;
                 curHex.resource = curHex.biome.rollResource();
-                if (curHex.resource != null && curHex.resource.display != null)
+                if (curHex.resource != null)
                 {
-                    Instantiate(curHex.resource.display, curHexObj.transform);
+                    curHex.Place(curHex.resource.display, HexTile.ResourceSlot);
                 }
                 tiles[x, z] = curHex;
             }
@@ -139,24 +141,62 @@ public class HexWorldManager : MonoBehaviour
 
         int ida = a.GetInstanceID(), idb = b.GetInstanceID();
         var key = ida < idb ? (ida, idb) : (idb, ida);
-        if (!roadLines.TryGetValue(key, out var line))
+        if (!roadSegments.TryGetValue(key, out var road))
         {
-            if (roadMaterial == null)
-            {
-                var shader = Shader.Find("Sprites/Default") ?? Shader.Find("Universal Render Pipeline/Unlit");
-                roadMaterial = new Material(shader);
-            }
-            line = new GameObject("Road " + a + "-" + b).AddComponent<LineRenderer>();
-            line.transform.SetParent(transform);
-            line.material = roadMaterial;
-            line.positionCount = 2;
-            line.SetPosition(0, a.Surface + Vector3.up * 0.2f);
-            line.SetPosition(1, b.Surface + Vector3.up * 0.2f);
-            roadLines[key] = line;
+            var obj = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            obj.name = "Road " + a + "-" + b;
+            Destroy(obj.GetComponent<Collider>());
+            if (roadMaterial != null) obj.GetComponent<Renderer>().sharedMaterial = roadMaterial;
+            road = obj.transform;
+            road.SetParent(transform);
+            Vector3 from = a.Surface, to = b.Surface;
+            road.position = (from + to) / 2f + Vector3.up * 0.05f;
+            road.rotation = Quaternion.LookRotation(to - from);
+            roadSegments[key] = road;
         }
         float t = (float)tier / (float)RoadTier.MAX_TIER;
-        line.widthMultiplier = 0.4f + 0.6f * t;
-        line.startColor = line.endColor = Color.Lerp(new Color(0.55f, 0.4f, 0.25f), new Color(0.75f, 0.75f, 0.8f), t);
+        float length = Vector3.Distance(a.Surface, b.Surface);
+        road.localScale = new Vector3(0.5f + 0.7f * t, 0.12f, length);
+        var block = new MaterialPropertyBlock();
+        block.SetColor("_BaseColor", Color.Lerp(new Color(0.55f, 0.4f, 0.25f), new Color(0.7f, 0.7f, 0.75f), t));
+        road.GetComponent<Renderer>().SetPropertyBlock(block);
+    }
+
+    // Gold frame around a tile; null hides it
+    public void Highlight(HexTile tile)
+    {
+        if (highlight == null) highlight = BuildFrame(HexRadius * 0.9f, HexRadius * 1.02f);
+        highlight.SetActive(tile != null);
+        if (tile != null) highlight.transform.position = new Vector3(tile.transform.position.x, tile.surfaceY + 0.08f, tile.transform.position.z);
+    }
+
+    private GameObject BuildFrame(float inner, float outer)
+    {
+        var verts = new Vector3[12];
+        var normals = new Vector3[12];
+        for (int k = 0; k < 6; k++)
+        {
+            float angle = k * Mathf.PI / 3f;
+            var dir = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle));
+            verts[k] = dir * outer;
+            verts[k + 6] = dir * inner;
+            normals[k] = normals[k + 6] = Vector3.up;
+        }
+        var tris = new List<int>();
+        for (int k = 0; k < 6; k++)
+        {
+            int o0 = k, o1 = (k + 1) % 6, i0 = k + 6, i1 = (k + 1) % 6 + 6;
+            // Both windings so the frame shows regardless of facing
+            tris.AddRange(new[] { o0, i0, o1, i0, i1, o1, o0, o1, i0, i0, o1, i1 });
+        }
+        var mesh = new Mesh { vertices = verts, normals = normals, triangles = tris.ToArray() };
+
+        var frame = new GameObject("Selection Frame");
+        frame.AddComponent<MeshFilter>().sharedMesh = mesh;
+        var renderer = frame.AddComponent<MeshRenderer>();
+        renderer.sharedMaterial = highlightMaterial;
+        renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        return frame;
     }
 
     private BiomeData RandomBiome()

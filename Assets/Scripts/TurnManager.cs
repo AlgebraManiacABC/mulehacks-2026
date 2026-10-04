@@ -32,6 +32,9 @@ public class TurnManager : MonoBehaviour
     // Upgrade costs and times of the capital, indexed by target tier
     [SerializeField]
     public Building capitolBuilding;
+    public Building farmBuilding;
+    public Building millBuilding;
+    public GameObject settlerPrefab;
     // The HexWorldManager, for ease of communication
     [SerializeField]
     public HexWorldManager hexWorldManager;
@@ -68,22 +71,23 @@ public class TurnManager : MonoBehaviour
             z = Random.Range(0, hexWorldManager.longitude);
 
         var startResources = new ResourceCollection { resources = new List<ResourcePile>(embarkResources) }.Clone();
-        capital = FoundSettlement(hexWorldManager.tiles[x, z], startResources, 7);
-        capital.isCapital = true;
+        capital = FoundSettlement(hexWorldManager.tiles[x, z], startResources, 7, true);
         Debug.Log("Embarked at " + x + ", " + z);
+        var controls = Camera.main != null ? Camera.main.GetComponent<PlayerControls>() : null;
+        if (controls != null) controls.FocusOn(capital.tile.Surface, true);
 
         gameObject.AddComponent<GameUI>();
     }
 
-    private Settlement FoundSettlement(HexTile tile, ResourceCollection resources, int population)
+    private Settlement FoundSettlement(HexTile tile, ResourceCollection resources, int population, bool isCapital = false)
     {
         Settlement settlement = tile.gameObject.AddComponent<Settlement>();
         tile.settlement = settlement;
         settlement.tile = tile;
         settlement.resources = resources;
         settlement.population = population;
-        if (embarkBuilding != null && embarkBuilding.tierModels.Length > 0)
-            settlement.model = Instantiate(embarkBuilding.tierModels[0], tile.transform);
+        settlement.isCapital = isCapital;
+        settlement.RefreshModels();
         settlement.Lost += OnLoseSettlement;
         settlements.Add(settlement);
         return settlement;
@@ -141,7 +145,6 @@ public class TurnManager : MonoBehaviour
             state = GameState.LOST;
         }
         settlement.tile.settlement = null;
-        if (settlement.model != null) Destroy(settlement.model);
         Destroy(settlement);
     }
 
@@ -187,7 +190,7 @@ public class TurnManager : MonoBehaviour
         s.resources.Remove(UpgradeCost(s));
         int next = s.tier + 1;
         StartProject(s, ProjectType.CITY_UPGRADE, "Upgrade " + s.DisplayName + " to T" + next, UpgradeTurns(s),
-            () => { if (s != null) s.tier = next; });
+            () => { if (s != null) { s.tier = next; s.RefreshModels(); } });
     }
 
     // ---- Settlers ----
@@ -209,11 +212,9 @@ public class TurnManager : MonoBehaviour
         from.resources.Remove(settlerResourceCost);
         from.population -= settlerCount;
 
-        var marker = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        var marker = settlerPrefab != null ? Instantiate(settlerPrefab) : GameObject.CreatePrimitive(PrimitiveType.Capsule);
         marker.name = "Settlers " + from.tile + " -> " + to;
-        Destroy(marker.GetComponent<Collider>());
-        marker.transform.position = from.tile.Surface + Vector3.up;
-        marker.GetComponent<Renderer>().material.color = new Color(0.9f, 0.3f, 0.2f);
+        foreach (var c in marker.GetComponentsInChildren<Collider>()) Destroy(c);
 
         var group = marker.AddComponent<SettlerGroup>();
         group.origin = from.tile;
@@ -221,6 +222,7 @@ public class TurnManager : MonoBehaviour
         group.totalTurns = group.turnsLeft = Mathf.Max(1, SettlerTurns(from, to));
         group.resources = settlerResourceCost.Clone();
         group.settlers = settlerCount;
+        group.SnapToRoute();
         activeSettlers.Add(group);
     }
 
@@ -293,7 +295,7 @@ public class TurnManager : MonoBehaviour
     {
         if (!CanBuildFarm(s, out _)) return;
         s.resources.Remove(farmCost);
-        StartProject(s, ProjectType.FARM, "Farm at " + s.DisplayName, 1, () => { if (s != null) s.hasFarm = true; });
+        StartProject(s, ProjectType.FARM, "Farm at " + s.DisplayName, 1, () => { if (s != null) { s.hasFarm = true; s.RefreshModels(); } });
     }
 
     // ---- Mill ----
@@ -316,7 +318,7 @@ public class TurnManager : MonoBehaviour
         if (!CanBuildMill(s, out _)) return;
         s.resources.Remove(MillCost(s));
         int next = s.millTier + 1;
-        StartProject(s, ProjectType.MILL, "T" + next + " mill at " + s.DisplayName, MillTurns(s), () => { if (s != null) s.millTier = next; });
+        StartProject(s, ProjectType.MILL, "T" + next + " mill at " + s.DisplayName, MillTurns(s), () => { if (s != null) { s.millTier = next; s.RefreshModels(); } });
     }
 
     // ---- Shipments ----

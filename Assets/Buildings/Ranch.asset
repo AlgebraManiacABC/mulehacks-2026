@@ -19,4 +19,5 @@ MonoBehaviour:
   - resources: []
   - resources: []
   tierResourceConversion: []
-  tierModels: []
+  tierModels:
+  - {fileID: 8966681452490952040, guid: c662da1d2075153b236c1ea03c44f7c1, type: 3}
